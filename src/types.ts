@@ -34,4 +34,5 @@ export interface Trip {
   // A master list of all places you are staying during this specific trip
   accommodations: Accommodation[]; 
   days: Day[];
+  location: string;
 }
