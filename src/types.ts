@@ -10,6 +10,7 @@ export interface ItineraryItem {
   id: string;
   time: string;
   activity: string;
+  location: string;
   // New: link back to the accommodation
   accommodationId?: string; 
   type: 'check-in' | 'check-out' | 'staying-at' | 'activity' | 'transport' | 'meal';
@@ -23,6 +24,7 @@ export interface TodoItem {
 
 export interface Day {
   date: string;
+  dayNum: number;
   notes: string;
   items: ItineraryItem[];
   todos: TodoItem[]
