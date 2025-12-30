@@ -12,10 +12,46 @@ import {
   Timeline,
   Card
 } from "@chakra-ui/react"
-import { LuTicketsPlane, LuPlaneLanding, LuPlaneTakeoff,  } from "react-icons/lu"
-import { ColorModeToggle } from "./components/color-mode-toggle"
 
-export default function Page() {
+import { ColorModeToggle } from "./components/color-mode-toggle"
+import { useState, useEffect } from "react";
+import { Trip } from "./types"
+
+
+
+export interface TripViewProps {
+  tripId: string | null;
+}
+
+export default function TripView({ tripId }: TripViewProps) {
+
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch the trip data asynchronously from the Node server
+  // TODO: create the Node server to handle these requests.
+  const loadTripData = async () => {
+    try {
+      const response = await fetch('http://localhost:2345/api/trips/${tripId}');
+      const data = await response.json();
+      setTrip(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching trip data:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTripData(); //Load the data immediately on mount
+
+    const interval = setInterval(() => {
+      loadTripData(); //Refresh data every 10 seconds
+    }, 10000);
+
+    return () => clearInterval(interval); //Cleanup on unmount
+  }, [tripId]); 
+
   return (
     <Box textAlign="left" fontSize="xl" pt="10vh">
         <HStack justify="center">
