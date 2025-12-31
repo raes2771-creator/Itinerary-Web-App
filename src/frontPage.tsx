@@ -20,7 +20,7 @@ import {
   NativeSelect,
   Stack
 } from "@chakra-ui/react"
-import { LuTicketsPlane, LuPlaneLanding, LuPlaneTakeoff } from "react-icons/lu"
+import { LuTicketsPlane, LuPlaneLanding, LuPlaneTakeoff } from "react-icons/lu" //currently unused, these are icons from a library
 import { ColorModeToggle } from "./components/color-mode-toggle"
 import { Trip } from "./types"
 import React, { useState } from "react"
@@ -38,6 +38,8 @@ export default function Page() {
     days: [],
   })
 
+  //TODO: see if we can get this using the server.js by making a POST request to the /api/trips endpoint
+  // This should then create a trip and add a trip summary to the meta.json file
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const uniqueId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9);
@@ -109,7 +111,7 @@ export default function Page() {
         </Portal>
 
       </Dialog.Root>
-      
+
       <Box pos="absolute" top="4" right="4">
         <ClientOnly fallback={<Skeleton w="10" h="10" rounded="md" />}>
           <ColorModeToggle />

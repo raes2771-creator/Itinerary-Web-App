@@ -32,7 +32,7 @@ export default function TripView({ tripId }: TripViewProps) {
   // TODO: create the Node server to handle these requests.
   const loadTripData = async () => {
     try {
-      const response = await fetch('http://localhost:2345/api/trips/${tripId}');
+      const response = await fetch(`http://localhost:3000/api/trips/${tripId}`);
       const data = await response.json();
       setTrip(data);
       setLoading(false);

@@ -3,7 +3,9 @@
   "private": true,
   "version": "1.0.2",
   "scripts": {
-    "dev": "vite",
+    "dev:frontend": "vite",
+    "dev:backend": "nodemon --exec tsx src/server.tsx",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
@@ -11,6 +13,8 @@
     "@chakra-ui/react": "^3.30.0",
     "@emotion/react": "^11.14.0",
     "@types/react-datepicker": "^6.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
     "next-themes": "^0.4.6",
     "react": "^19.2.1",
     "react-datepicker": "^9.1.0",
@@ -18,9 +22,15 @@
     "react-icons": "^5.5.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.3",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.11",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.0",
     "vite-tsconfig-paths": "^6.0.3"
