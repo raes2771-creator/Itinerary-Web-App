@@ -13,21 +13,36 @@ import {
   GridItem,
   Timeline,
   For,
-  Text
+  Text,
+  createOverlay
 } from "@chakra-ui/react"
 
 import { useState, useEffect } from 'react' 
-import { Trip } from "./types"
+import { Trip, Day } from "./types"
 import { LuPizza, LuMapPin, LuTrainFront, LuKey, LuBed } from "react-icons/lu"
 
 export interface DayViewProps {
-  thisTrip: Trip | null;
-  dayNum: number;
+  thisTrip : Trip | null;
+  dayNum : number;
 }
+
+// export default function DayView({ thisDay }: DayViewProps) {
+
+//   // const thisDay = thisTrip?.days[dayNum];
+
+//   return createOverlay<DayViewProps>((props) => {
+//     const { thisDay } = props;
+//     return (
+//       <Box p={4}>
+//         <Heading mb={4} size="3xl">Day {thisDay?.dayNum}</Heading>
+//       </Box>
+//     )
+//   })
+// }
 
 export default function DayView({ thisTrip, dayNum }: DayViewProps) {
 
-  const thisDay = thisTrip?.days[dayNum];
+  const thisDay = thisTrip?.days[dayNum]; // Temporary: always show first day
 
   // Filter out only the 'staying-at' type items to display these separately at the end of the day.
   const stayingAtItems = thisDay?.items.filter(item => item.type === 'staying-at');

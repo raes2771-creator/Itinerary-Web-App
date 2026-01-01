@@ -22,11 +22,37 @@ import {
 } from "@chakra-ui/react"
 import { LuTicketsPlane, LuPlaneLanding, LuPlaneTakeoff } from "react-icons/lu" //currently unused, these are icons from a library
 import { ColorModeToggle } from "./components/color-mode-toggle"
-import { Trip } from "./types"
+import { Trip, Day } from "./types"
 import React, { useState } from "react"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { useNavigate } from "react-router-dom";
+
+// function to create an array of Day objects between the start and end dates
+function createDays(startDate: Date, endDate: Date): Day[] {
+  
+  const dayCount = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1;
+  const days: Day[] = [];
+
+  for (let i = 0; i < dayCount; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    days.push({
+      date: currentDate,
+      dayNum: i + 1,
+      notes: "",
+      items: [],
+      todos: []
+    });
+  }
+
+  return days;
+}
+
+// Utility function to capitalize the first letter of a string
+function capitalizeFirstLetter(val: string): string {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
 
 export default function Page() {
   const navigate = useNavigate();
@@ -48,8 +74,10 @@ export default function Page() {
     const updatedTrip = { ...trip, id: uniqueId };
     const tripData = {
       ...updatedTrip,
+      destination: capitalizeFirstLetter(updatedTrip.destination),
       startDate: updatedTrip.startDate ? updatedTrip.startDate.toISOString() : null,
       endDate: updatedTrip.endDate ? updatedTrip.endDate.toISOString() : null,
+      days: (updatedTrip.startDate && updatedTrip.endDate) ? createDays(updatedTrip.startDate, updatedTrip.endDate) : []
     };
     // Send the trip data to the server
     try {

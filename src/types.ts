@@ -1,8 +1,10 @@
 export interface Accommodation {
     id: string; // e.g., "hotel-1"
     name: string; // e.g., "Park Hyatt Tokyo"
-    type: 'hotel' | 'hostel' | 'airbnb' | 'ryokan';
+    type: 'hotel' | 'hostel' | 'bnb' | 'ryokan' | 'apartment' | 'camping' | 'other';
     address: string;
+    checkInTime: Date | null;
+    checkOutTime: Date | null;
     link?: string;
 }
 
