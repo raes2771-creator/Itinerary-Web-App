@@ -23,7 +23,7 @@ export interface TodoItem {
 }
 
 export interface Day {
-    date: string;
+    date: Date;
     dayNum: number;
     notes: string;
     items: ItineraryItem[];
