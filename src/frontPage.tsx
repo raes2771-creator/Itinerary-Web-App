@@ -26,8 +26,10 @@ import { Trip } from "./types"
 import React, { useState } from "react"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
+import { useNavigate } from "react-router-dom";
 
 export default function Page() {
+  const navigate = useNavigate();
   const [trip, setTrip] = useState<Trip>({
     id: "",
     title: "",
@@ -49,7 +51,7 @@ export default function Page() {
       startDate: updatedTrip.startDate ? updatedTrip.startDate.toISOString() : null,
       endDate: updatedTrip.endDate ? updatedTrip.endDate.toISOString() : null,
     };
-    
+    // Send the trip data to the server
     try {
       const response = await fetch(`http://localhost:3000/api/trips/${uniqueId}`, {
         method: 'POST', 
@@ -60,7 +62,7 @@ export default function Page() {
       });
 
       if (response.ok) {
-        alert('Trip created successfully!');
+        navigate(`/trip/${uniqueId}`);
         setTrip({ id: "", title: "", destination: "", startDate:null, endDate:null, accommodations: [], days: [] });
       } else {
         alert('Failed to create trip. Please try again'); 
