@@ -1,7 +1,9 @@
+export type AccommodationType = 'hotel' | 'hostel' | 'bnb' | 'ryokan' | 'apartment' | 'camping' | 'other';
+
 export interface Accommodation {
     id: string; // e.g., "hotel-1"
     name: string; // e.g., "Park Hyatt Tokyo"
-    type: 'hotel' | 'hostel' | 'bnb' | 'ryokan' | 'apartment' | 'camping' | 'other';
+    type: AccommodationType | undefined;
     address: string;
     checkInTime: Date | null;
     checkOutTime: Date | null;

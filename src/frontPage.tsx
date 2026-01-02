@@ -28,10 +28,15 @@ import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { useNavigate } from "react-router-dom";
 
+export function countDays(startDate: Date, endDate: Date): number {
+  const timeDiff = endDate.getTime() - startDate.getTime();
+  return Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 to include both start and end dates
+}
+
 // function to create an array of Day objects between the start and end dates
 function createDays(startDate: Date, endDate: Date): Day[] {
   
-  const dayCount = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24)) + 1;
+  const dayCount = countDays(startDate, endDate);
   const days: Day[] = [];
 
   for (let i = 0; i < dayCount; i++) {

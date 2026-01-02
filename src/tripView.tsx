@@ -1,3 +1,29 @@
+import { ColorModeToggle } from "./components/color-mode-toggle"
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { Trip, Accommodation, AccommodationType, Day, ItineraryItem } from "./types"
+import DatePicker from "react-datepicker"
+import 'react-datetime-picker/dist/DateTimePicker.css';
+import 'react-calendar/dist/Calendar.css';
+import 'react-clock/dist/Clock.css';
+import DateTimePicker from "react-datetime-picker"
+import {
+  LuArrowRight,
+  LuHotel,
+  LuHouse,
+  LuCroissant,
+  LuBath,
+  LuBuilding2,
+  LuTent,
+  LuDoorOpen,
+  LuDoorClosed,
+  LuExternalLink,
+  LuMapPin,
+  LuPencil,
+  LuTrash2,
+  LuPlus,
+  LuClock
+} from "react-icons/lu"
 import {
   Box,
   Button,
@@ -12,41 +38,36 @@ import {
   Grid,
   GridItem,
   Spacer,
-  VStack
+  VStack,
+  Portal,
+  Dialog,
+  Field,
+  Fieldset,
+  Input,
+  Stack,
+  NativeSelect,
+  CloseButton,
 } from "@chakra-ui/react"
-
-import { ColorModeToggle } from "./components/color-mode-toggle"
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { Trip, Accommodation } from "./types"
-import {
-  LuArrowRight,
-  LuHotel,
-  LuHouse,
-  LuCroissant,
-  LuBath,
-  LuBuilding2,
-  LuTent,
-  LuDoorOpen,
-  LuDoorClosed,
-  LuLink2,
-  LuMapPin,
-  LuPencil,
-  LuTrash2,
-  LuPlus
-} from "react-icons/lu"
 
 function getDayOfWeek(date: Date): string {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   return days[date.getDay()];
 }
 
+function getNonStayingAtItems(day: Day): ItineraryItem[] {
+  return day.items.filter(item => item.type !== 'staying-at');
+  return day.items.filter(item => item.accommodationId === undefined);
+}
+function getStayingAtItem(day: Day): ItineraryItem | null {
+  const stayingAtItems = day.items.find(item => item.type === 'staying-at');
+  return (stayingAtItems ? stayingAtItems : null);
+}
+
 function AccommodationList({ accommodationList }: { accommodationList: Accommodation[] }) {
   if (accommodationList.length === 0) {
     return (
-      <Box>
-        <Text>No accommodations available.</Text>
-        <Button>Add a new accomodation item</Button>
+      <Box mb="4">
+        <Text fontSize="sm" color="fg.subtle">No accommodations available.</Text>
       </Box>
     );
   } else {
@@ -78,7 +99,7 @@ function AccommodationList({ accommodationList }: { accommodationList: Accommoda
                             <a href={accom.link} target="_blank" rel="noopener noreferrer">
                               <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
                                 More Info
-                                <LuLink2 />
+                                <LuExternalLink />
                               </Flex>
                             </a>
                           </Text>
@@ -94,7 +115,7 @@ function AccommodationList({ accommodationList }: { accommodationList: Accommoda
                       </Flex>
                       <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
                         <LuDoorClosed />
-                        <Text>Check-Out: {accom.checkOutTime ? accom.checkOutTime.toLocaleDateString() : 'N/A'} {accom.checkOutTime ? accom.checkOutTime.toLocaleDateString() : 'N/A'}</Text>
+                        <Text>Check-Out: {accom.checkOutTime ? accom.checkOutTime.toLocaleDateString() : 'N/A'} {accom.checkOutTime ? accom.checkOutTime.toLocaleTimeString() : 'N/A'}</Text>
                       </Flex>
                       <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
                         <LuMapPin />
@@ -122,12 +143,80 @@ function AccommodationList({ accommodationList }: { accommodationList: Accommoda
   }
 }
 
+function getAccomColor(item: ItineraryItem): string {
+  const colors = ['blue.500', 'green.500', 'yellow.500', 'purple.500', 'orange.500'];
+  const index = item.accommodationId ? parseInt(item.accommodationId.split('-')[1]) - 1 : 0;
+  return colors[index % colors.length];
+}
+
+function ScrollableDayList({ dayList }: { dayList: Day[] }) {
+  // Scrollable list of days
+  return (
+    <ScrollArea.Root width="100%" size="xs">
+      <ScrollArea.Viewport>
+        <ScrollArea.Content py="4">
+          <Flex direction="row" gap="4" flexWrap="nowrap">
+            <For each={dayList}>
+              {(day) => {
+                const stayingAtItem = getStayingAtItem(day);
+                const nonAccomItems = getNonStayingAtItems(day);
+                return (
+                  <Card.Root w="350px" mx="auto">
+                    <Card.Body gap="2">
+                      <Card.Title mt="2"> Day {day.dayNum} </Card.Title>
+                      <Card.Description>
+                        {getDayOfWeek(day.date)} - {day.date.getDate()}/{day.date.getMonth() + 1}/{day.date.getFullYear()}
+                      </Card.Description>
+                      <Box mt="4">
+                        <VStack align="start" gap="2" maxH="200px" overflowY="auto">
+                          {/* Show only first 3 items */}
+                          <For each={nonAccomItems.slice(0, 2)}>
+                            {(item) => (
+                              <Box key={item.id} p="2" borderWidth="1px" borderRadius="md" w="100%">
+                                <Text fontSize="xs">{item.time} - {item.activity}</Text>
+                              </Box>
+                            )}
+                          </For>
+                        </VStack>
+                      </Box>
+                    </Card.Body>
+                    <Card.Footer justifyContent="column">
+                          <Box>
+                            {stayingAtItem ? (
+                              <Box p="1" pl="2" pr="2" borderWidth="1px" borderRadius="md" w="100%" bgColor={getAccomColor(stayingAtItem)}>
+                                <Text fontSize="xs">{stayingAtItem.activity}</Text>
+                              </Box>
+                            ) : null}
+                          </Box>
+                      <Button variant="outline">Go to day <LuArrowRight /></Button>
+                    </Card.Footer>
+                  </Card.Root>
+                )
+              }}
+            </For>
+          </Flex>
+        </ScrollArea.Content>
+      </ScrollArea.Viewport>
+      <ScrollArea.Scrollbar orientation="horizontal" />
+      <ScrollArea.Corner />
+    </ScrollArea.Root>
+  )
+}
+
 export default function TripView() {
 
   //Get the trip ID from the URL parameters
   const tripId = useParams().id;
 
-  const [trip, setTrip] = useState<Trip | null>(null);
+  const [trip, setTrip] = useState<Trip>({
+    id: "",
+    title: "",
+    destination: "",
+    startDate: null,
+    endDate: null,
+    accommodations: [],
+    days: [],
+  });
   const [loading, setLoading] = useState(true);
 
   // Fetch the trip data asynchronously from the Node server
@@ -174,53 +263,219 @@ export default function TripView() {
     return () => clearInterval(interval); //Cleanup on unmount
   }, [tripId]);
 
+
+  const [newAccom, setNewAccom] = useState<Partial<Accommodation>>({
+    type: undefined,
+    name: "",
+    address: "",
+    link: "",
+    checkInTime: null,
+    checkOutTime: null,
+  })
+
+  const handleSubmitAccom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Add the new accommodation to the trip state
+    if (newAccom.name && newAccom.address) {
+      const accomId = `accom-${trip.accommodations.length + 1}`;
+      const accomToAdd: Accommodation = {
+        id: accomId,
+        name: newAccom.name || "",
+        type: (newAccom.type || "other") as AccommodationType,
+        address: newAccom.address || "",
+        checkInTime: newAccom.checkInTime ?? null,
+        checkOutTime: newAccom.checkOutTime ?? null,
+        link: newAccom.link || "",
+      };
+      // TODO: create relevant itinerary items for check-in/check-out here:
+      let checkInItem: ItineraryItem = {
+        id: `item-${Date.now()}-checkin`,
+        time: newAccom.checkInTime ? newAccom.checkInTime.toLocaleTimeString() : "N/A",
+        activity: "Check-In to " + accomToAdd.name,
+        location: accomToAdd.address,
+        accommodationId: accomId,
+        type: 'check-in'
+      };
+      let checkOutItem: ItineraryItem = {
+        id: `item-${Date.now()}-checkout`,
+        time: newAccom.checkOutTime ? newAccom.checkOutTime.toLocaleTimeString() : "N/A",
+        activity: "Check-In to " + accomToAdd.name,
+        location: accomToAdd.address,
+        accommodationId: accomId,
+        type: 'check-in'
+      };
+      let stayingAtItem: ItineraryItem = {
+        id: `item-${Date.now()}-stayingat`,
+        time: "",
+        activity: "Staying at " + accomToAdd.name,
+        location: accomToAdd.address,
+        accommodationId: accomId,
+        type: 'staying-at'
+      };
+      // Update days with new items
+      const updatedDays = trip.days.map(day => {
+        const dayDateStr = day.date.toDateString();
+        const checkInDateStr = newAccom.checkInTime ? newAccom.checkInTime.toDateString() : null;
+        const checkOutDateStr = newAccom.checkOutTime ? newAccom.checkOutTime.toDateString() : null;
+
+        // Logic to add items on relevant days.
+        // Check-in day:    add check-in and staying-at
+        // Check-out day:   add check-out
+        // In-between days: add staying-at
+        if (checkInDateStr && dayDateStr === checkInDateStr) {
+          stayingAtItem.id = `item-${Date.now()}-stayingat-${day.dayNum}`;
+          checkInItem.id = `item-${Date.now()}-checkin-${day.dayNum}`;
+          return { ...day, items: [...day.items, checkInItem, stayingAtItem] };
+        } else if (checkOutDateStr && dayDateStr === checkOutDateStr) {
+          checkOutItem.id = `item-${Date.now()}-checkout-${day.dayNum}`;
+          return { ...day, items: [...day.items, checkOutItem] };
+        } else if (checkInDateStr && checkOutDateStr && day.date > new Date(checkInDateStr) && day.date < new Date(checkOutDateStr)) {
+          stayingAtItem.id = `item-${Date.now()}-stayingat-${day.dayNum}`;
+          return { ...day, items: [...day.items, stayingAtItem] };
+        } else {
+          return day;
+        }
+      });
+      // append to current trip accommodations
+      const newTrip = {
+        ...trip,
+        accommodations: [...trip.accommodations, accomToAdd],
+        days: updatedDays
+      }
+      setTrip(newTrip);
+      // reset form
+      setNewAccom({
+        type: undefined,
+        name: "",
+        address: "",
+        link: "",
+        checkInTime: null,
+        checkOutTime: null,
+      });
+      try {
+        const response = await fetch(`http://localhost:3000/api/trips/${newTrip.id}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newTrip),
+        });
+
+        if (response.ok != true) {
+          alert('Failed to add accommodation. Please try again');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occured.');
+      }
+    }
+  };
+
+
+  const AccomodationForm = (
+    <Portal>
+      <Dialog.Positioner>
+        <Dialog.Content>
+          <Fieldset.Root size="lg" maxW="md" p="4">
+            <Stack> {/* Begining of the form*/}
+              <Fieldset.Legend>New Accomodation</Fieldset.Legend>
+              <Fieldset.HelperText>
+                Add the details of your accomodation
+              </Fieldset.HelperText>
+            </Stack>
+
+            {/* Form to create a new accomodation item */}
+            <Fieldset.Content>
+              <Field.Root>
+                <Field.Label>Accommodation Type</Field.Label>
+                <NativeSelect.Root size="md">
+                  <NativeSelect.Field placeholder="Select type..." value={newAccom.type || ""} onChange={(e) => setNewAccom({ ...newAccom, type: e.target.value as AccommodationType })}>
+                    <For each={['hotel', 'hostel', 'bnb', 'ryokan', 'apartment', 'camping', 'other']}>
+                      {(type) => (
+                        <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+                      )}
+                    </For>
+                  </NativeSelect.Field>
+                  <NativeSelect.Indicator />
+                </NativeSelect.Root>
+              </Field.Root>
+              <Field.Root>
+                <Field.Label>Name</Field.Label>
+                <Input name="title" value={newAccom.name} onChange={e => setNewAccom({ ...newAccom, name: e.target.value })} />
+              </Field.Root>
+
+              <Field.Root>
+                <Field.Label><LuMapPin />Address</Field.Label>
+                <Input name="location" value={newAccom.address} onChange={e => setNewAccom({ ...newAccom, address: e.target.value })} />
+              </Field.Root>
+
+              <Field.Root>
+                <Field.Label><LuClock />Check-in date/time</Field.Label>
+                <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkInTime}
+                  onChange={(date: Date | null) => setNewAccom({ ...newAccom, checkInTime: date })} />
+              </Field.Root>
+
+              <Field.Root>
+                <Field.Label><LuClock />Check-out date/time</Field.Label>
+                <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkOutTime}
+                  onChange={(date: Date | null) => setNewAccom({ ...newAccom, checkOutTime: date })} />
+              </Field.Root>
+
+              <Field.Root>
+                <Field.Label>Link (optional)</Field.Label>
+                <Input name="link" value={newAccom.link} onChange={e => setNewAccom({ ...newAccom, link: e.target.value })} />
+              </Field.Root>
+            </Fieldset.Content>
+          </Fieldset.Root>
+          <Dialog.Footer >
+            <Flex direction="flex-end" gap="4" alignItems="center" mt="4">
+              <Dialog.ActionTrigger asChild>
+                <Button size="md" variant="outline">Cancel</Button>
+              </Dialog.ActionTrigger>
+              <Button size="md" colorPalette="blue" onClick={handleSubmitAccom}> { /* Submit button for the form */}
+                Add to Trip
+              </Button>
+            </Flex>
+          </Dialog.Footer>
+          <Dialog.CloseTrigger asChild>
+            <CloseButton size="sm" />
+          </Dialog.CloseTrigger>
+        </Dialog.Content>
+      </Dialog.Positioner>
+    </Portal>
+  )
+
   return (
-    <Box textAlign="left" fontSize="xl" pt="10vh" margin="6">
+    <Box textAlign="left" fontSize="xl" pt="2vh" margin="6">
+      <Heading size="4xl">{trip?.title} - Itinerary</Heading>
+      <Text mb="3" fontSize="md" color="fg.muted"> {/* Print the trip dates */}
+        {trip?.destination} {trip?.startDate ? new Date(trip.startDate).toLocaleDateString() : 'N/A'} - {trip?.endDate ? new Date(trip.endDate).toLocaleDateString() : 'N/A'}
+      </Text>
+
       {/* Accomodation Info */}
-      <Box mb="6">
-        <Heading size="4xl">{trip?.title} - Itinerary</Heading>
-        <Text mb="3" fontSize="md" color="fg.muted"> {/* Print the trip dates */}
-          {trip?.destination} {trip?.startDate ? new Date(trip.startDate).toLocaleDateString() : 'N/A'} - {trip?.endDate ? new Date(trip.endDate).toLocaleDateString() : 'N/A'}
-        </Text>
+      <Box mt="6" mb="6">
         <Heading size="2xl" mb="3">Accomodation</Heading>
         <AccommodationList accommodationList={trip ? trip.accommodations : []} />
+        <Dialog.Root placement="center" motionPreset="slide-in-bottom">
+          <Dialog.Trigger asChild>
+            <Button size="sm" colorPalette="blue"><LuPlus />Add Accommodation</Button>
+          </Dialog.Trigger>
 
-        <Button size="sm"><LuPlus />Add Accommodation</Button>
+          {AccomodationForm}
+        </Dialog.Root>
       </Box>
+
       {/* Day Info */}
       <Box mb="6">
         <Heading size="2xl" mb="3">Days</Heading>
-        {/* Horizontal scrollable list of days */}
-        <ScrollArea.Root width="100%" size="xs">
-          <ScrollArea.Viewport>
-            <ScrollArea.Content py="4">
-              <Flex direction="row" gap="4" flexWrap="nowrap">
-                <For each={trip?.days}>
-                  {(day) => (
-                    <Card.Root w="300px" mx="auto">
-                      <Card.Body gap="2">
-                        <Card.Title mt="2"> Day {day.dayNum} </Card.Title>
-                        <Card.Description>
-                          {getDayOfWeek(day.date)} - {day.date.getDate()}/{day.date.getMonth() + 1}/{day.date.getFullYear()}
-                        </Card.Description>
-                      </Card.Body>
-                      <Card.Footer justifyContent="flex-end">
-                        <Button variant="outline">Go to day <LuArrowRight /></Button>
-                      </Card.Footer>
-                    </Card.Root>
-                  )}
-                </For>
-              </Flex>
-            </ScrollArea.Content>
-          </ScrollArea.Viewport>
-          <ScrollArea.Scrollbar orientation="horizontal" />
-          <ScrollArea.Corner />
-        </ScrollArea.Root>
-        <Box pos="absolute" top="4" right="4">
-          <ClientOnly fallback={<Skeleton w="10" h="10" rounded="md" />}>
-            <ColorModeToggle />
-          </ClientOnly>
-        </Box>
+        <ScrollableDayList dayList={trip ? trip.days : []} />
+      </Box>
+
+      {/* Color Mode Toggle */}
+      <Box pos="absolute" top="4" right="4">
+        <ClientOnly fallback={<Skeleton w="10" h="10" rounded="md" />}>
+          <ColorModeToggle />
+        </ClientOnly>
       </Box>
     </Box>
   )
