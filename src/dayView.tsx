@@ -49,10 +49,10 @@ export default function DayView({ thisTrip, dayNum }: DayViewProps) {
   const otherItems = thisDay?.items.filter(item => item.type !== 'staying-at');
 
   return (
-    <Box p={4}>
+    <Box p="2">
       <Grid templateColumns="repeat(2, 1fr)" gap="6">
         <GridItem>
-          <Box p={4} borderWidth="1px" borderRadius="lg" boxShadow="md">
+          <Box borderWidth="1px" borderRadius="lg" boxShadow="md">
             <Heading mb={4} size="lg">Daily Itinerary</Heading>
             <Timeline.Root>
               <For each={otherItems}>

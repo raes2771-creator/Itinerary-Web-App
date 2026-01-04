@@ -47,9 +47,10 @@ import {
   Input,
   Stack,
   NativeSelect,
-  CloseButton,
+  CloseButton
 } from "@chakra-ui/react"
 import DayView from "./dayView";
+import { useNavigate } from "react-router-dom";
 
 function getDayOfWeek(date: Date): string {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -192,7 +193,7 @@ export default function TripView() {
         checkOutTime: newAccom.checkOutTime ?? null,
         link: newAccom.link || "",
       };
-      // TODO: create relevant itinerary items for check-in/check-out here:
+      // Create relevant itinerary items for check-in/check-out here:
       let checkInItem: ItineraryItem = {
         id: `item-${Date.now()}-checkin`,
         time: newAccom.checkInTime ? newAccom.checkInTime.toLocaleTimeString() : "N/A",
@@ -312,7 +313,7 @@ export default function TripView() {
   }
 
   const AccommodationList = ({ accommodationList }: { accommodationList: Accommodation[] }) => {
-    if (accommodationList.length === 0) {
+    if (accommodationList && accommodationList.length === 0) {
       return (
         <Box mb="4">
           <Text fontSize="sm" color="fg.subtle">No accommodations available.</Text>
@@ -531,7 +532,20 @@ export default function TripView() {
     </Portal>
   )
 
+  // 404 state, displayed if trip ID in URL is invalid.
+  const navigate = useNavigate();
+  const emptyState = (
+    <Box p={4} pt={10}>
+      <VStack alignContent="center" gap="4">
+      404 - Item not found.
+      <Button colorPalette="blue"
+      onClick={() => navigate(`/`)}>Return to front page</Button>
+      </VStack>
+    </Box>
+  )
+
   return (
+    (trip.id == "" ? ( //display 404 state if trip not found from id
     <Box textAlign="left" fontSize="xl" pt="2vh" margin="6">
       <Heading size="4xl">{trip?.title} - Itinerary</Heading>
       <Text mb="3" fontSize="md" color="fg.muted"> {/* Print the trip dates */}
@@ -565,5 +579,6 @@ export default function TripView() {
         </ClientOnly>
       </Box>
     </Box>
+    ) : emptyState)
   )
 }
