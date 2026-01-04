@@ -17,13 +17,13 @@ import {
   createOverlay
 } from "@chakra-ui/react"
 
-import { useState, useEffect } from 'react' 
+import { useState, useEffect } from 'react'
 import { Trip, Day } from "./types"
 import { LuPizza, LuMapPin, LuTrainFront, LuKey, LuBed } from "react-icons/lu"
 
 export interface DayViewProps {
-  thisTrip : Trip | null;
-  dayNum : number;
+  thisTrip: Trip | null;
+  dayNum: number;
 }
 
 // export default function DayView({ thisDay }: DayViewProps) {
@@ -50,14 +50,13 @@ export default function DayView({ thisTrip, dayNum }: DayViewProps) {
 
   return (
     <Box p={4}>
-      <Heading mb={4} size="3xl">{thisTrip?.title} - Day {thisDay?.dayNum}</Heading>
       <Grid templateColumns="repeat(2, 1fr)" gap="6">
         <GridItem>
           <Box p={4} borderWidth="1px" borderRadius="lg" boxShadow="md">
             <Heading mb={4} size="lg">Daily Itinerary</Heading>
             <Timeline.Root>
-            <For each={otherItems}>
-              {(item) => (
+              <For each={otherItems}>
+                {(item) => (
                   <Timeline.Item>
                     <Timeline.Connector>
                       <Timeline.Separator />
@@ -85,33 +84,33 @@ export default function DayView({ thisTrip, dayNum }: DayViewProps) {
                       }
                     </Timeline.Content>
                   </Timeline.Item>
+                )}
+              </For>
+
+              {stayingAtItems && stayingAtItems.length > 0 && ( // If we have at least one 'staying at' item
+                <Timeline.Item>
+                  <Timeline.Connector>
+                    <Timeline.Separator />
+                    <Timeline.Indicator>
+                      <LuBed />
+                    </Timeline.Indicator>
+                  </Timeline.Connector>
+                  <Timeline.Content>
+                    <Timeline.Title>Staying At</Timeline.Title>
+                    <Timeline.Description>
+                      {stayingAtItems.map(item => {
+                        const accomId = item.accommodationId;
+                        const accom = accomId ? thisTrip?.accommodations.find(a => a.id === accomId) : null;
+                        return (
+                          <Text key={item.id} textStyle="sm">
+                            {accom ? `Staying at ${accom.name}` : 'Staying at unknown location'}
+                          </Text>
+                        );
+                      })}
+                    </Timeline.Description>
+                  </Timeline.Content>
+                </Timeline.Item>
               )}
-            </For>
-            
-            {stayingAtItems && stayingAtItems.length > 0 && ( // If we have at least one 'staying at' item
-              <Timeline.Item>
-                <Timeline.Connector>
-                  <Timeline.Separator />
-                  <Timeline.Indicator>
-                    <LuBed /> 
-                  </Timeline.Indicator>
-                </Timeline.Connector>
-                <Timeline.Content>
-                  <Timeline.Title>Staying At</Timeline.Title>
-                  <Timeline.Description>
-                    {stayingAtItems.map(item => {
-                      const accomId = item.accommodationId;
-                      const accom = accomId ? thisTrip?.accommodations.find(a => a.id === accomId) : null;
-                      return (
-                        <Text key={item.id} textStyle="sm">
-                          {accom ? `Staying at ${accom.name}` : 'Staying at unknown location'}
-                        </Text>
-                      );
-                    })}
-                  </Timeline.Description>
-                </Timeline.Content>
-              </Timeline.Item>
-            )}
             </Timeline.Root>
           </Box>
         </GridItem>

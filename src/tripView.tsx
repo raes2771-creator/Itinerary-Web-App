@@ -1,5 +1,5 @@
 import { ColorModeToggle } from "./components/color-mode-toggle"
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Trip, Accommodation, AccommodationType, Day, ItineraryItem } from "./types"
 import DatePicker from "react-datepicker"
@@ -41,7 +41,7 @@ import {
   Spacer,
   VStack, HStack,
   Portal,
-  Dialog,
+  Dialog, createOverlay,
   Field,
   Fieldset,
   Input,
@@ -49,6 +49,7 @@ import {
   NativeSelect,
   CloseButton,
 } from "@chakra-ui/react"
+import DayView from "./dayView";
 
 function getDayOfWeek(date: Date): string {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -57,7 +58,6 @@ function getDayOfWeek(date: Date): string {
 
 function getNonStayingAtItems(day: Day): ItineraryItem[] {
   return day.items.filter(item => item.type !== 'staying-at');
-  return day.items.filter(item => item.accommodationId === undefined);
 }
 function getStayingAtItem(day: Day): ItineraryItem | null {
   const stayingAtItems = day.items.find(item => item.type === 'staying-at');
@@ -70,62 +70,43 @@ function getAccomColor(item: ItineraryItem): string {
   return colors[index % colors.length];
 }
 
-function ScrollableDayList({ dayList }: { dayList: Day[] }) {
-  // Scrollable list of days
-  return (
-    <ScrollArea.Root width="100%" size="xs">
-      <ScrollArea.Viewport>
-        <ScrollArea.Content py="4">
-          <Flex direction="row" gap="4" flexWrap="nowrap">
-            <For each={dayList}>
-              {(day) => {
-                const stayingAtItem = getStayingAtItem(day);
-                const nonAccomItems = getNonStayingAtItems(day);
-                return (
-                  <Card.Root w="350px" mx="auto">
-                    <Card.Body gap="2">
-                      <Card.Title mt="2"> Day {day.dayNum} </Card.Title>
-                      <Card.Description>
-                        {getDayOfWeek(day.date)} - {day.date.getDate()}/{day.date.getMonth() + 1}/{day.date.getFullYear()}
-                      </Card.Description>
-                      <Box mt="4">
-                        <VStack align="start" gap="2" maxH="200px" overflowY="auto">
-                          {/* Show only first 3 items */}
-                          <For each={nonAccomItems.slice(0, 2)}>
-                            {(item) => (
-                              <Box key={item.id} p="2" borderWidth="1px" borderRadius="md" w="100%">
-                                <Text fontSize="xs">{item.time} - {item.activity}</Text>
-                              </Box>
-                            )}
-                          </For>
-                        </VStack>
-                      </Box>
-                    </Card.Body>
-                    <Card.Footer justifyContent="column">
-                      <Box>
-                        {stayingAtItem ? (
-                          <Box p="1" pl="2" pr="2" borderWidth="1px" borderRadius="md" w="100%" bgColor={getAccomColor(stayingAtItem)}>
-                            <HStack alignItems="center">
-                              <LuBed />
-                              <Text fontSize="xs">{stayingAtItem.activity}</Text>
-                            </HStack>
-                          </Box>
-                        ) : null}
-                      </Box>
-                      <Button variant="outline">Go to day <LuArrowRight /></Button>
-                    </Card.Footer>
-                  </Card.Root>
-                )
-              }}
-            </For>
-          </Flex>
-        </ScrollArea.Content>
-      </ScrollArea.Viewport>
-      <ScrollArea.Scrollbar orientation="horizontal" />
-      <ScrollArea.Corner />
-    </ScrollArea.Root>
-  )
+interface DialogProps {
+  title: string,
+  description?: string,
+  content?: React.ReactNode
+  size?: Dialog.RootProps["size"]
+  placement?: Dialog.RootProps["placement"]
 }
+
+const dialog = createOverlay<DialogProps>((props): React.ReactNode => {
+  const { title, description, content, size, placement, ...rest } = props
+  return (
+    <Dialog.Root {...rest}>
+      <Portal>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            {title && (
+              <Dialog.Header>
+                <Dialog.Title>{title}</Dialog.Title>
+                <Dialog.CloseTrigger asChild>
+                  <CloseButton size="sm" />
+                </Dialog.CloseTrigger>
+              </Dialog.Header>
+            )}
+            <Dialog.Body spaceY="4">
+              {description && (
+                <Dialog.Description>{description}</Dialog.Description>
+              )}
+              {content}
+            </Dialog.Body>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  )
+});
+
 
 export default function TripView() {
 
@@ -410,7 +391,74 @@ export default function TripView() {
     }
   }
 
+  const ScrollableDayList = ({ dayList }: { dayList: Day[] }) => {
+    // Scrollable list of days
+    return (
+      <ScrollArea.Root size="md">
+        <ScrollArea.Viewport>
+          <ScrollArea.Content py="4">
+            <HStack gap="4" >
+              <For each={dayList}>
+                {(day) => {
+                  const stayingAtItem = getStayingAtItem(day);
+                  const nonAccomItems = getNonStayingAtItems(day);
+                  return (
+                    <Card.Root w="350px" mx="auto">
+                      <Card.Body gap="2">
+                        <Card.Title mt="2"> Day {day.dayNum} </Card.Title>
+                        <Card.Description>
+                          {getDayOfWeek(day.date)} - {day.date.getDate()}/{day.date.getMonth() + 1}/{day.date.getFullYear()}
+                        </Card.Description>
+                        <Box mt="4">
+                          <VStack align="start" gap="2" maxH="200px" overflowY="auto">
+                            {/* Show only first 3 items */}
+                            <For each={nonAccomItems.slice(0, 2)}>
+                              {(item) => (
+                                <Box key={item.id} p="2" borderWidth="1px" borderRadius="md" w="100%">
+                                  <Text fontSize="xs">{item.time} - {item.activity}</Text>
+                                </Box>
+                              )}
+                            </For>
+                          </VStack>
+                        </Box>
+                      </Card.Body>
+                      <Card.Footer justifyContent="column">
+                        <Box>
+                          {stayingAtItem ? (
+                            <Box p="1" pl="2" pr="2" borderWidth="1px" borderRadius="md" w="100%" bgColor={getAccomColor(stayingAtItem)}>
+                              <HStack alignItems="center">
+                                <LuBed />
+                                <Text fontSize="xs">{stayingAtItem.activity}</Text>
+                              </HStack>
+                            </Box>
+                          ) : null}
+                        </Box>
+                        <Button variant="outline"
+                          onClick={() => dialog.open("day", {
+                            title: "Day " + day.dayNum,
+                            content: <DayView thisTrip={trip} dayNum={day.dayNum} />,
+                            size: "cover",
+                            placement: "center"
+                          })}>
+                          Go to day <LuArrowRight />
+                        </Button>
+                        <dialog.Viewport />
+                      </Card.Footer>
+                    </Card.Root>
+                  )
+                }}
+              </For>
+            </HStack>
+          </ScrollArea.Content>
+        </ScrollArea.Viewport>
+        <ScrollArea.Scrollbar orientation="horizontal" />
+        <ScrollArea.Corner />
+      </ScrollArea.Root>
+    )
+  }
+
   const AccomodationForm = (
+    //TODO: replace this with a programmatically created overlay using the "dialog" creator defined above.
     <Portal>
       <Dialog.Positioner>
         <Dialog.Content>
