@@ -22,7 +22,8 @@ import {
   LuPencil,
   LuTrash2,
   LuPlus,
-  LuClock
+  LuClock,
+  LuBed
 } from "react-icons/lu"
 import {
   Box,
@@ -38,7 +39,7 @@ import {
   Grid,
   GridItem,
   Spacer,
-  VStack,
+  VStack, HStack,
   Portal,
   Dialog,
   Field,
@@ -61,86 +62,6 @@ function getNonStayingAtItems(day: Day): ItineraryItem[] {
 function getStayingAtItem(day: Day): ItineraryItem | null {
   const stayingAtItems = day.items.find(item => item.type === 'staying-at');
   return (stayingAtItems ? stayingAtItems : null);
-}
-
-function AccommodationList({ accommodationList }: { accommodationList: Accommodation[] }) {
-  if (accommodationList.length === 0) {
-    return (
-      <Box mb="4">
-        <Text fontSize="sm" color="fg.subtle">No accommodations available.</Text>
-      </Box>
-    );
-  } else {
-    return (
-      <Box>
-        <For each={accommodationList}>
-          {(accom) => (
-            <Card.Root mb="6" key={accom.id} size="sm">
-              <Card.Body>
-                <Grid templateColumns="repeat(5, 1fr)" >
-                  <GridItem height="100%" colSpan={2}>
-                    <Flex direction="column">
-                      <Box>
-                        <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
-                          {accom.type === 'hotel' ? <LuHotel /> :
-                            accom.type === 'hostel' ? <LuHouse /> :
-                              accom.type === 'bnb' ? <LuCroissant /> :
-                                accom.type === 'ryokan' ? <LuBath /> :
-                                  accom.type === 'apartment' ? <LuBuilding2 /> :
-                                    accom.type === 'camping' ? <LuTent /> :
-                                      null}
-                          <Heading size="lg">{accom.name}</Heading>
-                        </Flex>
-                      </Box>
-                      <Spacer />
-                      <Box>
-                        {accom.link && (
-                          <Text textStyle="md" fontWeight="bold" color="blue.500">
-                            <a href={accom.link} target="_blank" rel="noopener noreferrer">
-                              <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
-                                More Info
-                                <LuExternalLink />
-                              </Flex>
-                            </a>
-                          </Text>
-                        )}
-                      </Box>
-                    </Flex>
-                  </GridItem>
-                  <GridItem fontWeight="light" textStyle="md" colSpan={2}>
-                    <Box borderLeftWidth="1px" borderColor="gray.500" pl="4">
-                      <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
-                        <LuDoorOpen />
-                        <Text>Check-In: {accom.checkInTime ? accom.checkInTime.toLocaleDateString() : 'N/A'} {accom.checkInTime ? accom.checkInTime.toLocaleTimeString() : 'N/A'}</Text>
-                      </Flex>
-                      <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
-                        <LuDoorClosed />
-                        <Text>Check-Out: {accom.checkOutTime ? accom.checkOutTime.toLocaleDateString() : 'N/A'} {accom.checkOutTime ? accom.checkOutTime.toLocaleTimeString() : 'N/A'}</Text>
-                      </Flex>
-                      <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
-                        <LuMapPin />
-                        <Text>{accom.address}</Text>
-                      </Flex>
-                    </Box>
-                  </GridItem>
-                  <GridItem fontWeight="light" textStyle="md" colSpan={1}>
-                    <VStack align="end">
-                      <Button size="sm" colorPalette="blue">
-                        <LuPencil /> Modify
-                      </Button>
-                      <Button size="sm" colorPalette="red">
-                        <LuTrash2 /> Delete
-                      </Button>
-                    </VStack>
-                  </GridItem>
-                </Grid>
-              </Card.Body>
-            </Card.Root>
-          )}
-        </For>
-      </Box>
-    )
-  }
 }
 
 function getAccomColor(item: ItineraryItem): string {
@@ -181,13 +102,16 @@ function ScrollableDayList({ dayList }: { dayList: Day[] }) {
                       </Box>
                     </Card.Body>
                     <Card.Footer justifyContent="column">
-                          <Box>
-                            {stayingAtItem ? (
-                              <Box p="1" pl="2" pr="2" borderWidth="1px" borderRadius="md" w="100%" bgColor={getAccomColor(stayingAtItem)}>
-                                <Text fontSize="xs">{stayingAtItem.activity}</Text>
-                              </Box>
-                            ) : null}
+                      <Box>
+                        {stayingAtItem ? (
+                          <Box p="1" pl="2" pr="2" borderWidth="1px" borderRadius="md" w="100%" bgColor={getAccomColor(stayingAtItem)}>
+                            <HStack alignItems="center">
+                              <LuBed />
+                              <Text fontSize="xs">{stayingAtItem.activity}</Text>
+                            </HStack>
                           </Box>
+                        ) : null}
+                      </Box>
                       <Button variant="outline">Go to day <LuArrowRight /></Button>
                     </Card.Footer>
                   </Card.Root>
@@ -299,15 +223,15 @@ export default function TripView() {
       let checkOutItem: ItineraryItem = {
         id: `item-${Date.now()}-checkout`,
         time: newAccom.checkOutTime ? newAccom.checkOutTime.toLocaleTimeString() : "N/A",
-        activity: "Check-In to " + accomToAdd.name,
+        activity: "Check-Out of " + accomToAdd.name,
         location: accomToAdd.address,
         accommodationId: accomId,
-        type: 'check-in'
+        type: 'check-out'
       };
       let stayingAtItem: ItineraryItem = {
         id: `item-${Date.now()}-stayingat`,
         time: "",
-        activity: "Staying at " + accomToAdd.name,
+        activity: accomToAdd.name,
         location: accomToAdd.address,
         accommodationId: accomId,
         type: 'staying-at'
@@ -371,6 +295,120 @@ export default function TripView() {
     }
   };
 
+  // handler to delete a given accomodation entry from the whole trip (including itinerary items)
+  const handleDeleteAccom = (accomId: string) => async (e: React.MouseEvent) => {
+    e.preventDefault();
+    // remove the accommodation with given ID from the list:
+    const updatedAccoms = trip.accommodations.filter(accom => accom.id !== accomId);
+    // also remove related itinerary items with the same accom ID:
+    const updatedDays = trip.days.map(day => {
+      const filteredItems = day.items.filter(item => item.accommodationId !== accomId);
+      return { ...day, items: filteredItems };
+    }
+    );
+    // add updated accom and itinerary lists to trip state:
+    const newTrip = {
+      ...trip,
+      accommodations: updatedAccoms,
+      days: updatedDays
+    }
+    setTrip(newTrip);
+    try {
+      const response = await fetch(`http://localhost:3000/api/trips/${newTrip.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newTrip),
+      });
+      if (response.ok != true) {
+        alert('Failed to delete accommodation. Please try again');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occured.');
+    }
+  }
+
+  const AccommodationList = ({ accommodationList }: { accommodationList: Accommodation[] }) => {
+    if (accommodationList.length === 0) {
+      return (
+        <Box mb="4">
+          <Text fontSize="sm" color="fg.subtle">No accommodations available.</Text>
+        </Box>
+      );
+    } else {
+      return (
+        <Box>
+          <For each={accommodationList}>
+            {(accom) => (
+              <Card.Root mb="6" key={accom.id} size="sm">
+                <Card.Body>
+                  <Grid templateColumns="repeat(5, 1fr)" >
+                    <GridItem height="100%" colSpan={2}>
+                      <Flex direction="column">
+                        <Box>
+                          <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
+                            {accom.type === 'hotel' ? <LuHotel /> :
+                              accom.type === 'hostel' ? <LuHouse /> :
+                                accom.type === 'bnb' ? <LuCroissant /> :
+                                  accom.type === 'ryokan' ? <LuBath /> :
+                                    accom.type === 'apartment' ? <LuBuilding2 /> :
+                                      accom.type === 'camping' ? <LuTent /> :
+                                        null}
+                            <Heading size="lg">{accom.name}</Heading>
+                          </Flex>
+                        </Box>
+                        <Spacer />
+                        <Box>
+                          {accom.link && (
+                            <Text textStyle="md" fontWeight="bold" color="blue.500">
+                              <a href={accom.link} target="_blank" rel="noopener noreferrer">
+                                <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
+                                  More Info
+                                  <LuExternalLink />
+                                </Flex>
+                              </a>
+                            </Text>
+                          )}
+                        </Box>
+                      </Flex>
+                    </GridItem>
+                    <GridItem fontWeight="light" textStyle="md" colSpan={2}>
+                      <Box borderLeftWidth="1px" borderColor="gray.500" pl="4">
+                        <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
+                          <LuDoorOpen />
+                          <Text>Check-In: {accom.checkInTime ? accom.checkInTime.toLocaleDateString() : 'N/A'} {accom.checkInTime ? accom.checkInTime.toLocaleTimeString() : 'N/A'}</Text>
+                        </Flex>
+                        <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
+                          <LuDoorClosed />
+                          <Text>Check-Out: {accom.checkOutTime ? accom.checkOutTime.toLocaleDateString() : 'N/A'} {accom.checkOutTime ? accom.checkOutTime.toLocaleTimeString() : 'N/A'}</Text>
+                        </Flex>
+                        <Flex direction="flex-start" alignItems="center" gap="2" mb="2">
+                          <LuMapPin />
+                          <Text>{accom.address}</Text>
+                        </Flex>
+                      </Box>
+                    </GridItem>
+                    <GridItem fontWeight="light" textStyle="md" colSpan={1}>
+                      <VStack align="end">
+                        <Button size="sm" colorPalette="blue"> {/*TODO: add a handler for modification of an accomodation item.*/}
+                          <LuPencil /> Modify
+                        </Button>
+                        <Button size="sm" colorPalette="red" onClick={handleDeleteAccom(accom.id)}>
+                          <LuTrash2 /> Delete
+                        </Button>
+                      </VStack>
+                    </GridItem>
+                  </Grid>
+                </Card.Body>
+              </Card.Root>
+            )}
+          </For>
+        </Box>
+      )
+    }
+  }
 
   const AccomodationForm = (
     <Portal>
@@ -452,6 +490,13 @@ export default function TripView() {
         {trip?.destination} {trip?.startDate ? new Date(trip.startDate).toLocaleDateString() : 'N/A'} - {trip?.endDate ? new Date(trip.endDate).toLocaleDateString() : 'N/A'}
       </Text>
 
+
+      {/* Day Info */}
+      <Box mb="6">
+        <Heading size="2xl" mb="3">Days</Heading>
+        <ScrollableDayList dayList={trip ? trip.days : []} />
+      </Box>
+
       {/* Accomodation Info */}
       <Box mt="6" mb="6">
         <Heading size="2xl" mb="3">Accomodation</Heading>
@@ -463,12 +508,6 @@ export default function TripView() {
 
           {AccomodationForm}
         </Dialog.Root>
-      </Box>
-
-      {/* Day Info */}
-      <Box mb="6">
-        <Heading size="2xl" mb="3">Days</Heading>
-        <ScrollableDayList dayList={trip ? trip.days : []} />
       </Box>
 
       {/* Color Mode Toggle */}
