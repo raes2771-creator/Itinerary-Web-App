@@ -1,0 +1,29 @@
+/* In your CSS file */
+.light .react-datetime-picker__wrapper {
+  background-color: white !important;
+  border-color: #d1d5db !important;
+}
+
+.light .react-datetime-picker__inputGroup__input,
+.light .react-datetime-picker__button {
+  color: black !important;
+}
+
+.light .react-calendar {
+  background-color: white !important;
+  color: black !important;
+}
+
+.light .react-calendar__tile,
+.light .react-calendar__navigation button {
+  color: black !important;
+}
+
+.light .react-clock {
+  background-color: white !important;
+}
+
+.light .react-clock__hand,
+.light .react-clock__mark__body {
+  background-color: black !important;
+}

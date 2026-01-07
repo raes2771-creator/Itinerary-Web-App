@@ -2,10 +2,11 @@ import { ColorModeToggle } from "./components/color-mode-toggle"
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Trip, Accommodation, AccommodationType, Day, ItineraryItem } from "./types"
-import DatePicker from "react-datepicker"
+
 import 'react-datetime-picker/dist/DateTimePicker.css';
 import 'react-calendar/dist/Calendar.css';
 import 'react-clock/dist/Clock.css';
+import './datetime-picker-style.css';
 import DateTimePicker from "react-datetime-picker"
 import {
   LuArrowRight,
@@ -65,13 +66,13 @@ function getStayingAtItem(day: Day): ItineraryItem | null {
   return (stayingAtItems ? stayingAtItems : null);
 }
 
-function getAccomColor(item: ItineraryItem): string {
+export function getAccomColor(item: ItineraryItem): string {
   const colors = ['blue.500', 'green.500', 'yellow.500', 'purple.500', 'orange.500'];
   const index = item.accommodationId ? parseInt(item.accommodationId.split('-')[1]) - 1 : 0;
   return colors[index % colors.length];
 }
 
-interface DialogProps {
+export interface DialogProps {
   title: string,
   description?: string,
   content?: React.ReactNode
@@ -79,8 +80,8 @@ interface DialogProps {
   placement?: Dialog.RootProps["placement"]
 }
 
-const dialog = createOverlay<DialogProps>((props): React.ReactNode => {
-  const { title, description, content, size, placement, ...rest } = props
+export const dialog = createOverlay<DialogProps>((props): React.ReactNode => {
+  const { title, description, content, ...rest } = props
   return (
     <Dialog.Root {...rest}>
       <Portal>
@@ -95,7 +96,7 @@ const dialog = createOverlay<DialogProps>((props): React.ReactNode => {
                 </Dialog.CloseTrigger>
               </Dialog.Header>
             )}
-            <Dialog.Body spaceY="4">
+            <Dialog.Body p="1" spaceY="4">
               {description && (
                 <Dialog.Description>{description}</Dialog.Description>
               )}
@@ -393,6 +394,13 @@ export default function TripView() {
   }
 
   const ScrollableDayList = ({ dayList }: { dayList: Day[] }) => {
+    const EmptyItineraryItem = () => {
+      return (
+        <Box p="2" borderWidth="1px" borderRadius="md" w="100%">
+          <Text fontSize="xs" color="fg.muted">Go to day to add an activity!</Text>
+        </Box>
+      )
+    }
     // Scrollable list of days
     return (
       <ScrollArea.Root size="md">
@@ -404,7 +412,7 @@ export default function TripView() {
                   const stayingAtItem = getStayingAtItem(day);
                   const nonAccomItems = getNonStayingAtItems(day);
                   return (
-                    <Card.Root w="350px" mx="auto">
+                    <Card.Root w="350px" mx="auto" key={day.dayNum}>
                       <Card.Body gap="2">
                         <Card.Title mt="2"> Day {day.dayNum} </Card.Title>
                         <Card.Description>
@@ -412,14 +420,17 @@ export default function TripView() {
                         </Card.Description>
                         <Box mt="4">
                           <VStack align="start" gap="2" maxH="200px" overflowY="auto">
-                            {/* Show only first 3 items */}
-                            <For each={nonAccomItems.slice(0, 2)}>
-                              {(item) => (
-                                <Box key={item.id} p="2" borderWidth="1px" borderRadius="md" w="100%">
-                                  <Text fontSize="xs">{item.time} - {item.activity}</Text>
-                                </Box>
-                              )}
-                            </For>
+                            {nonAccomItems.length > 0 ? (
+                              <For each={nonAccomItems.slice(0, 2)}>
+                                {(item) => (
+                                  <Box key={item.id} p="2" borderWidth="1px" borderRadius="md" w="100%">
+                                    <Text fontSize="xs">{item.time.slice(3)} - {item.activity}</Text>
+                                  </Box>
+                                )}
+                              </For>
+                            ) :
+                              <EmptyItineraryItem />
+                            }
                           </VStack>
                         </Box>
                       </Card.Body>
@@ -438,7 +449,7 @@ export default function TripView() {
                           onClick={() => dialog.open("day", {
                             title: "Day " + day.dayNum,
                             content: <DayView thisTrip={trip} dayNum={day.dayNum} />,
-                            size: "cover",
+                            size: "full",
                             placement: "center"
                           })}>
                           Go to day <LuArrowRight />
@@ -458,127 +469,137 @@ export default function TripView() {
     )
   }
 
-  const AccomodationForm = (
-    //TODO: replace this with a programmatically created overlay using the "dialog" creator defined above.
-    <Portal>
-      <Dialog.Positioner>
-        <Dialog.Content>
-          <Fieldset.Root size="lg" maxW="md" p="4">
-            <Stack> {/* Begining of the form*/}
-              <Fieldset.Legend>New Accomodation</Fieldset.Legend>
-              <Fieldset.HelperText>
-                Add the details of your accomodation
-              </Fieldset.HelperText>
-            </Stack>
+  const AccommodationForm = () => {
+    return (
+      <Fieldset.Root size="lg" maxW="md" p="4">
+        <Stack> {/* Begining of the form*/}
+          <Fieldset.Legend>New Accomodation</Fieldset.Legend>
+          <Fieldset.HelperText>
+            Add the details of your accomodation
+          </Fieldset.HelperText>
+        </Stack>
 
-            {/* Form to create a new accomodation item */}
-            <Fieldset.Content>
-              <Field.Root>
-                <Field.Label>Accommodation Type</Field.Label>
-                <NativeSelect.Root size="md">
-                  <NativeSelect.Field placeholder="Select type..." value={newAccom.type || ""} onChange={(e) => setNewAccom({ ...newAccom, type: e.target.value as AccommodationType })}>
-                    <For each={['hotel', 'hostel', 'bnb', 'ryokan', 'apartment', 'camping', 'other']}>
-                      {(type) => (
-                        <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                      )}
-                    </For>
-                  </NativeSelect.Field>
-                  <NativeSelect.Indicator />
-                </NativeSelect.Root>
-              </Field.Root>
-              <Field.Root>
-                <Field.Label>Name</Field.Label>
-                <Input name="title" value={newAccom.name} onChange={e => setNewAccom({ ...newAccom, name: e.target.value })} />
-              </Field.Root>
+        {/* Form to create a new accomodation item */}
+        <Fieldset.Content>
+          <Field.Root>
+            <Field.Label>Accommodation Type</Field.Label>
+            <NativeSelect.Root size="md">
+              <NativeSelect.Field placeholder="Select type..." value={newAccom.type || ""} onChange={(e) => setNewAccom({ ...newAccom, type: e.target.value as AccommodationType })}>
+                <For each={['hotel', 'hostel', 'bnb', 'ryokan', 'apartment', 'camping', 'other']}>
+                  {(type) => (
+                    <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+                  )}
+                </For>
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Field.Root>
+          <Field.Root>
+            <Field.Label>Name</Field.Label>
+            <Input name="title" value={newAccom.name} onChange={e => setNewAccom({ ...newAccom, name: e.target.value })} />
+          </Field.Root>
 
-              <Field.Root>
-                <Field.Label><LuMapPin />Address</Field.Label>
-                <Input name="location" value={newAccom.address} onChange={e => setNewAccom({ ...newAccom, address: e.target.value })} />
-              </Field.Root>
+          <Field.Root>
+            <Field.Label><LuMapPin />Address</Field.Label>
+            <Input name="location" value={newAccom.address} onChange={e => setNewAccom({ ...newAccom, address: e.target.value })} />
+          </Field.Root>
 
-              <Field.Root>
-                <Field.Label><LuClock />Check-in date/time</Field.Label>
-                <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkInTime}
-                  onChange={(date: Date | null) => setNewAccom({ ...newAccom, checkInTime: date })} />
-              </Field.Root>
+          <Field.Root >
+            <Box className="light">
+            <Field.Label><LuClock />Check-in date/time</Field.Label>
+            <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkInTime}
+              onChange={(date: Date | null) => setNewAccom({ ...newAccom, checkInTime: date })} />
+            </Box>
+          </Field.Root>
 
-              <Field.Root>
-                <Field.Label><LuClock />Check-out date/time</Field.Label>
-                <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkOutTime}
-                  onChange={(date: Date | null) => setNewAccom({ ...newAccom, checkOutTime: date })} />
-              </Field.Root>
+          <Field.Root className="light">
+            <Field.Label><LuClock />Check-out date/time</Field.Label>
+            <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkOutTime} 
+              onChange={(date: Date | null) => setNewAccom({ ...newAccom, checkOutTime: date })} />
+          </Field.Root>
 
-              <Field.Root>
-                <Field.Label>Link (optional)</Field.Label>
-                <Input name="link" value={newAccom.link} onChange={e => setNewAccom({ ...newAccom, link: e.target.value })} />
-              </Field.Root>
-            </Fieldset.Content>
-          </Fieldset.Root>
-          <Dialog.Footer >
-            <Flex direction="flex-end" gap="4" alignItems="center" mt="4">
-              <Dialog.ActionTrigger asChild>
-                <Button size="md" variant="outline">Cancel</Button>
-              </Dialog.ActionTrigger>
-              <Button size="md" colorPalette="blue" onClick={handleSubmitAccom}> { /* Submit button for the form */}
-                Add to Trip
-              </Button>
-            </Flex>
-          </Dialog.Footer>
-          <Dialog.CloseTrigger asChild>
-            <CloseButton size="sm" />
-          </Dialog.CloseTrigger>
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Portal>
-  )
+          <Field.Root>
+            <Field.Label>Link (optional)</Field.Label>
+            <Input name="link" value={newAccom.link} onChange={e => setNewAccom({ ...newAccom, link: e.target.value })} />
+          </Field.Root>
+
+          <Flex direction="flex-end" gap="4" alignItems="center" mt="4">
+            <Dialog.ActionTrigger asChild>
+              <Button size="md" variant="outline">Cancel</Button>
+            </Dialog.ActionTrigger>
+            <Button size="md" colorPalette="blue" onClick={handleSubmitAccom}> { /* Submit button for the form */}
+              Add to Trip
+            </Button>
+          </Flex>
+        </Fieldset.Content>
+      </Fieldset.Root>
+    )
+  }
 
   // 404 state, displayed if trip ID in URL is invalid.
   const navigate = useNavigate();
   const emptyState = (
     <Box p={4} pt={10}>
       <VStack alignContent="center" gap="4">
-      404 - Item not found.
-      <Button colorPalette="blue"
-      onClick={() => navigate(`/`)}>Return to front page</Button>
+        404 - Item not found.
+        <Button colorPalette="blue"
+          onClick={() => navigate(`/`)}>Return to front page</Button>
       </VStack>
     </Box>
   )
 
   return (
-    (trip.id == "" ? ( //display 404 state if trip not found from id
-    <Box textAlign="left" fontSize="xl" pt="2vh" margin="6">
-      <Heading size="4xl">{trip?.title} - Itinerary</Heading>
-      <Text mb="3" fontSize="md" color="fg.muted"> {/* Print the trip dates */}
-        {trip?.destination} {trip?.startDate ? new Date(trip.startDate).toLocaleDateString() : 'N/A'} - {trip?.endDate ? new Date(trip.endDate).toLocaleDateString() : 'N/A'}
-      </Text>
+    <>
+      {loading ? (
+        <Box p={4} pt={10}>
+          <VStack alignContent="center" gap="4">
+            Loading...
+          </VStack>
+        </Box>
+      ) : trip.id !== "" && trip.id === tripId ? (
+        <Box textAlign="left" fontSize="xl" pt="2vh" margin="6">
+          <Heading size="4xl">{trip?.title} - Itinerary</Heading>
+          <Text mb="3" fontSize="md" color="fg.muted"> {/* Print the trip dates */}
+            {trip?.destination} {trip?.startDate ? new Date(trip.startDate).toLocaleDateString() : 'N/A'} - {trip?.endDate ? new Date(trip.endDate).toLocaleDateString() : 'N/A'}
+          </Text>
 
+          {/* Day Info */}
+          <Box mb="6">
+            <Heading size="2xl" mb="3">Days</Heading>
+            <ScrollableDayList dayList={trip ? trip.days : []} />
+          </Box>
 
-      {/* Day Info */}
-      <Box mb="6">
-        <Heading size="2xl" mb="3">Days</Heading>
-        <ScrollableDayList dayList={trip ? trip.days : []} />
-      </Box>
+          {/* Accomodation Info */}
+          <Box mt="6" mb="6">
+            <Heading size="2xl" mb="3">Accomodation</Heading>
+            <AccommodationList accommodationList={trip ? trip.accommodations : []} />
+            <Dialog.Root placement="center" motionPreset="slide-in-bottom">
+              {/* <Dialog.Trigger asChild>
+                <Button size="sm" colorPalette="blue"><LuPlus />Add Accommodation</Button>
+              </Dialog.Trigger> */}
+              <Button colorPalette="blue" size="md"
+                onClick={() => dialog.open("accom", {
+                  title: "Add Accomodation",
+                  content: <AccommodationForm />,
+                  size: "lg",
+                  placement: "center"
+                })}>
+                <LuPlus />Add Accomodation Item
+              </Button>
+            </Dialog.Root>
+          </Box>
 
-      {/* Accomodation Info */}
-      <Box mt="6" mb="6">
-        <Heading size="2xl" mb="3">Accomodation</Heading>
-        <AccommodationList accommodationList={trip ? trip.accommodations : []} />
-        <Dialog.Root placement="center" motionPreset="slide-in-bottom">
-          <Dialog.Trigger asChild>
-            <Button size="sm" colorPalette="blue"><LuPlus />Add Accommodation</Button>
-          </Dialog.Trigger>
+          {/* Color Mode Toggle */}
+          <Box pos="absolute" top="4" right="4">
+            <ClientOnly fallback={<Skeleton w="10" h="10" rounded="md" />}>
+              <ColorModeToggle />
+            </ClientOnly>
+          </Box>
+        </Box>
+      ) : (
+        emptyState
+      )}
+    </>
 
-          {AccomodationForm}
-        </Dialog.Root>
-      </Box>
-
-      {/* Color Mode Toggle */}
-      <Box pos="absolute" top="4" right="4">
-        <ClientOnly fallback={<Skeleton w="10" h="10" rounded="md" />}>
-          <ColorModeToggle />
-        </ClientOnly>
-      </Box>
-    </Box>
-    ) : emptyState)
   )
 }
