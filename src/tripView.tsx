@@ -171,112 +171,6 @@ export default function TripView() {
   }, [tripId]);
 
 
-  const [newAccom, setNewAccom] = useState<Partial<Accommodation>>({
-    type: undefined,
-    name: "",
-    address: "",
-    link: "",
-    checkInTime: null,
-    checkOutTime: null,
-  })
-
-  const handleSubmitAccom = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Add the new accommodation to the trip state
-    if (newAccom.name && newAccom.address) {
-      const accomId = `accom-${trip.accommodations.length + 1}`;
-      const accomToAdd: Accommodation = {
-        id: accomId,
-        name: newAccom.name || "",
-        type: (newAccom.type || "other") as AccommodationType,
-        address: newAccom.address || "",
-        checkInTime: newAccom.checkInTime ?? null,
-        checkOutTime: newAccom.checkOutTime ?? null,
-        link: newAccom.link || "",
-      };
-      // Create relevant itinerary items for check-in/check-out here:
-      let checkInItem: ItineraryItem = {
-        id: `item-${Date.now()}-checkin`,
-        time: newAccom.checkInTime ? newAccom.checkInTime.toLocaleTimeString() : "N/A",
-        activity: "Check-In to " + accomToAdd.name,
-        location: accomToAdd.address,
-        accommodationId: accomId,
-        type: 'check-in'
-      };
-      let checkOutItem: ItineraryItem = {
-        id: `item-${Date.now()}-checkout`,
-        time: newAccom.checkOutTime ? newAccom.checkOutTime.toLocaleTimeString() : "N/A",
-        activity: "Check-Out of " + accomToAdd.name,
-        location: accomToAdd.address,
-        accommodationId: accomId,
-        type: 'check-out'
-      };
-      let stayingAtItem: ItineraryItem = {
-        id: `item-${Date.now()}-stayingat`,
-        time: "",
-        activity: accomToAdd.name,
-        location: accomToAdd.address,
-        accommodationId: accomId,
-        type: 'staying-at'
-      };
-      // Update days with new items
-      const updatedDays = trip.days.map(day => {
-        const dayDateStr = day.date.toDateString();
-        const checkInDateStr = newAccom.checkInTime ? newAccom.checkInTime.toDateString() : null;
-        const checkOutDateStr = newAccom.checkOutTime ? newAccom.checkOutTime.toDateString() : null;
-
-        // Logic to add items on relevant days.
-        // Check-in day:    add check-in and staying-at
-        // Check-out day:   add check-out
-        // In-between days: add staying-at
-        if (checkInDateStr && dayDateStr === checkInDateStr) {
-          stayingAtItem.id = `item-${Date.now()}-stayingat-${day.dayNum}`;
-          checkInItem.id = `item-${Date.now()}-checkin-${day.dayNum}`;
-          return { ...day, items: [...day.items, checkInItem, stayingAtItem] };
-        } else if (checkOutDateStr && dayDateStr === checkOutDateStr) {
-          checkOutItem.id = `item-${Date.now()}-checkout-${day.dayNum}`;
-          return { ...day, items: [...day.items, checkOutItem] };
-        } else if (checkInDateStr && checkOutDateStr && day.date > new Date(checkInDateStr) && day.date < new Date(checkOutDateStr)) {
-          stayingAtItem.id = `item-${Date.now()}-stayingat-${day.dayNum}`;
-          return { ...day, items: [...day.items, stayingAtItem] };
-        } else {
-          return day;
-        }
-      });
-      // append to current trip accommodations
-      const newTrip = {
-        ...trip,
-        accommodations: [...trip.accommodations, accomToAdd],
-        days: updatedDays
-      }
-      setTrip(newTrip);
-      // reset form
-      setNewAccom({
-        type: undefined,
-        name: "",
-        address: "",
-        link: "",
-        checkInTime: null,
-        checkOutTime: null,
-      });
-      try {
-        const response = await fetch(`http://localhost:3000/api/trips/${newTrip.id}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(newTrip),
-        });
-
-        if (response.ok != true) {
-          alert('Failed to add accommodation. Please try again');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('An error occured.');
-      }
-    }
-  };
 
   // handler to delete a given accomodation entry from the whole trip (including itinerary items)
   const handleDeleteAccom = (accomId: string) => async (e: React.MouseEvent) => {
@@ -470,6 +364,114 @@ export default function TripView() {
   }
 
   const AccommodationForm = () => {
+
+    const [newAccom, setNewAccom] = useState<Partial<Accommodation>>({
+      type: undefined,
+      name: "",
+      address: "",
+      link: "",
+      checkInTime: null,
+      checkOutTime: null,
+    })
+
+    const handleSubmitAccom = async (e: React.FormEvent) => {
+      e.preventDefault();
+      // Add the new accommodation to the trip state
+      if (newAccom.name && newAccom.address) {
+        const accomId = `accom-${trip.accommodations.length + 1}`;
+        const accomToAdd: Accommodation = {
+          id: accomId,
+          name: newAccom.name || "",
+          type: (newAccom.type || "other") as AccommodationType,
+          address: newAccom.address || "",
+          checkInTime: newAccom.checkInTime ?? null,
+          checkOutTime: newAccom.checkOutTime ?? null,
+          link: newAccom.link || "",
+        };
+        // Create relevant itinerary items for check-in/check-out here:
+        let checkInItem: ItineraryItem = {
+          id: `item-${Date.now()}-checkin`,
+          time: newAccom.checkInTime ? newAccom.checkInTime.toLocaleTimeString() : "N/A",
+          activity: "Check-In to " + accomToAdd.name,
+          location: accomToAdd.address,
+          accommodationId: accomId,
+          type: 'check-in'
+        };
+        let checkOutItem: ItineraryItem = {
+          id: `item-${Date.now()}-checkout`,
+          time: newAccom.checkOutTime ? newAccom.checkOutTime.toLocaleTimeString() : "N/A",
+          activity: "Check-Out of " + accomToAdd.name,
+          location: accomToAdd.address,
+          accommodationId: accomId,
+          type: 'check-out'
+        };
+        let stayingAtItem: ItineraryItem = {
+          id: `item-${Date.now()}-stayingat`,
+          time: "",
+          activity: accomToAdd.name,
+          location: accomToAdd.address,
+          accommodationId: accomId,
+          type: 'staying-at'
+        };
+        // Update days with new items
+        const updatedDays = trip.days.map(day => {
+          const dayDateStr = day.date.toDateString();
+          const checkInDateStr = newAccom.checkInTime ? newAccom.checkInTime.toDateString() : null;
+          const checkOutDateStr = newAccom.checkOutTime ? newAccom.checkOutTime.toDateString() : null;
+
+          // Logic to add items on relevant days.
+          // Check-in day:    add check-in and staying-at
+          // Check-out day:   add check-out
+          // In-between days: add staying-at
+          if (checkInDateStr && dayDateStr === checkInDateStr) {
+            stayingAtItem.id = `item-${Date.now()}-stayingat-${day.dayNum}`;
+            checkInItem.id = `item-${Date.now()}-checkin-${day.dayNum}`;
+            return { ...day, items: [...day.items, checkInItem, stayingAtItem] };
+          } else if (checkOutDateStr && dayDateStr === checkOutDateStr) {
+            checkOutItem.id = `item-${Date.now()}-checkout-${day.dayNum}`;
+            return { ...day, items: [...day.items, checkOutItem] };
+          } else if (checkInDateStr && checkOutDateStr && day.date > new Date(checkInDateStr) && day.date < new Date(checkOutDateStr)) {
+            stayingAtItem.id = `item-${Date.now()}-stayingat-${day.dayNum}`;
+            return { ...day, items: [...day.items, stayingAtItem] };
+          } else {
+            return day;
+          }
+        });
+        // append to current trip accommodations
+        const newTrip = {
+          ...trip,
+          accommodations: [...trip.accommodations, accomToAdd],
+          days: updatedDays
+        }
+        setTrip(newTrip);
+        // reset form
+        setNewAccom({
+          type: undefined,
+          name: "",
+          address: "",
+          link: "",
+          checkInTime: null,
+          checkOutTime: null,
+        });
+        try {
+          const response = await fetch(`http://localhost:3000/api/trips/${newTrip.id}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newTrip),
+          });
+
+          if (response.ok != true) {
+            alert('Failed to add accommodation. Please try again');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occured.');
+        }
+      }
+    };
+
     return (
       <Fieldset.Root size="lg" maxW="md" p="4">
         <Stack> {/* Begining of the form*/}
@@ -506,15 +508,15 @@ export default function TripView() {
 
           <Field.Root >
             <Box className="light">
-            <Field.Label><LuClock />Check-in date/time</Field.Label>
-            <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkInTime}
-              onChange={(date: Date | null) => setNewAccom({ ...newAccom, checkInTime: date })} />
+              <Field.Label><LuClock />Check-in date/time</Field.Label>
+              <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkInTime}
+                onChange={(date: Date | null) => setNewAccom({ ...newAccom, checkInTime: date })} />
             </Box>
           </Field.Root>
 
           <Field.Root className="light">
             <Field.Label><LuClock />Check-out date/time</Field.Label>
-            <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkOutTime} 
+            <DateTimePicker name="start-date" minDate={trip.startDate!} maxDate={trip.endDate!} value={newAccom.checkOutTime}
               onChange={(date: Date | null) => setNewAccom({ ...newAccom, checkOutTime: date })} />
           </Field.Root>
 
@@ -573,20 +575,20 @@ export default function TripView() {
           <Box mt="6" mb="6">
             <Heading size="2xl" mb="3">Accomodation</Heading>
             <AccommodationList accommodationList={trip ? trip.accommodations : []} />
-            <Dialog.Root placement="center" motionPreset="slide-in-bottom">
-              {/* <Dialog.Trigger asChild>
+
+            {/* <Dialog.Trigger asChild>
                 <Button size="sm" colorPalette="blue"><LuPlus />Add Accommodation</Button>
               </Dialog.Trigger> */}
-              <Button colorPalette="blue" size="md"
-                onClick={() => dialog.open("accom", {
-                  title: "Add Accomodation",
-                  content: <AccommodationForm />,
-                  size: "lg",
-                  placement: "center"
-                })}>
-                <LuPlus />Add Accomodation Item
-              </Button>
-            </Dialog.Root>
+            <Button colorPalette="blue" size="md"
+              onClick={() => dialog.open("accom", {
+                title: "Add Accomodation",
+                content: <AccommodationForm />,
+                size: "lg",
+                placement: "center"
+              })}>
+              <LuPlus />Add Accomodation Item
+            </Button>
+            <dialog.Viewport />
           </Box>
 
           {/* Color Mode Toggle */}
