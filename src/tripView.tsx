@@ -1,13 +1,12 @@
 import { ColorModeToggle } from "./components/color-mode-toggle"
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Trip, Accommodation, AccommodationType, Day, ItineraryItem } from "./types"
-
+import { Trip, Accommodation, AccommodationType, Day, ItineraryItem } from "./types";
 import 'react-datetime-picker/dist/DateTimePicker.css';
 import 'react-calendar/dist/Calendar.css';
 import 'react-clock/dist/Clock.css';
 import './datetime-picker-style.css';
-import DateTimePicker from "react-datetime-picker"
+import DateTimePicker from "react-datetime-picker";
 import {
   LuArrowRight,
   LuHotel,
@@ -109,7 +108,6 @@ export const dialog = createOverlay<DialogProps>((props): React.ReactNode => {
   )
 });
 
-
 export default function TripView() {
 
   //Get the trip ID from the URL parameters
@@ -151,7 +149,13 @@ export default function TripView() {
         }));
       }
 
-      setTrip(data);
+      // Only update state if data has actually changed
+      setTrip(prevTrip => {
+        if (JSON.stringify(prevTrip) !== JSON.stringify(data)) {
+          return data;
+        }
+        return prevTrip;
+      });
       setLoading(false);
     } catch (error) {
       // console.error('Error fetching trip data:', error);
@@ -169,8 +173,6 @@ export default function TripView() {
 
     return () => clearInterval(interval); //Cleanup on unmount
   }, [tripId]);
-
-
 
   // handler to delete a given accomodation entry from the whole trip (including itinerary items)
   const handleDeleteAccom = (accomId: string) => async (e: React.MouseEvent) => {
@@ -342,13 +344,12 @@ export default function TripView() {
                         <Button variant="outline"
                           onClick={() => dialog.open("day", {
                             title: "Day " + day.dayNum,
-                            content: <DayView thisTrip={trip} dayNum={day.dayNum} />,
+                            content: <DayView key={`day-${day.dayNum}`} thisTrip={trip} dayNum={day.dayNum} />,
                             size: "full",
                             placement: "center"
                           })}>
                           Go to day <LuArrowRight />
                         </Button>
-                        <dialog.Viewport />
                       </Card.Footer>
                     </Card.Root>
                   )
@@ -464,6 +465,8 @@ export default function TripView() {
 
           if (response.ok != true) {
             alert('Failed to add accommodation. Please try again');
+          } else {
+            dialog.close("accom");
           }
         } catch (error) {
           console.error('Error:', error);
@@ -588,7 +591,6 @@ export default function TripView() {
               })}>
               <LuPlus />Add Accomodation Item
             </Button>
-            <dialog.Viewport />
           </Box>
 
           {/* Color Mode Toggle */}
@@ -597,6 +599,8 @@ export default function TripView() {
               <ColorModeToggle />
             </ClientOnly>
           </Box>
+
+          <dialog.Viewport />
         </Box>
       ) : (
         emptyState

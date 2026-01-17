@@ -10,6 +10,8 @@ export interface Accommodation {
     link?: string;
 }
 
+export type ItineraryItemType = 'check-in' | 'check-out' | 'staying-at' | 'activity' | 'transport' | 'meal';
+
 export interface ItineraryItem {
     id: string;
     time: string;
@@ -17,7 +19,7 @@ export interface ItineraryItem {
     location: string;
     // New: link back to the accommodation
     accommodationId?: string;
-    type: 'check-in' | 'check-out' | 'staying-at' | 'activity' | 'transport' | 'meal';
+    type: ItineraryItemType | undefined;
 }
 
 export interface TodoItem {

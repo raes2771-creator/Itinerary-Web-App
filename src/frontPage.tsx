@@ -78,7 +78,14 @@ export default function Page() {
       const response = await fetch('http://localhost:3000/api/trips/');
       const data = await response.json();
       if (Array.isArray(data)) {
-        setTripList(data as [TripSummary]);
+        // Only update state if data has actually changed
+        const newData = data as [TripSummary];
+        setTripList(prevList => {
+          if (JSON.stringify(prevList) !== JSON.stringify(newData)) {
+            return newData;
+          }
+          return prevList;
+        });
       }
       setLoading(false);
     } catch (error) {
@@ -124,7 +131,10 @@ export default function Page() {
                         <LuTrash2 />
                       </Button>
                     </Show>
-                    <Button size="xs" variant="solid" colorPalette="blue"><LuArrowRight /></Button>
+                    <Button size="xs" variant="solid" colorPalette="blue"
+                      onClick={() => navigate(`/trip/${item.id}`)}>
+                      <LuArrowRight />
+                    </Button>
                   </HStack>
                   {/* This is the card body. Lorem ipsum dolor sit amet, consectetur
           adipiscing elit. */}
@@ -148,40 +158,41 @@ export default function Page() {
       days: [],
     })
 
-      //TODO: see if we can get this using the server.js by making a POST request to the /api/trips endpoint
-  // This should then create a trip and add a trip summary to the meta.json file
-  const handleLocalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const uniqueId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9);
-    const updatedTrip = { ...trip, id: uniqueId };
-    const tripData = {
-      ...updatedTrip,
-      destination: capitalizeFirstLetter(updatedTrip.destination),
-      startDate: updatedTrip.startDate ? updatedTrip.startDate.toISOString() : null,
-      endDate: updatedTrip.endDate ? updatedTrip.endDate.toISOString() : null,
-      days: (updatedTrip.startDate && updatedTrip.endDate) ? createDays(updatedTrip.startDate, updatedTrip.endDate) : []
-    };
-    // Send the trip data to the server
-    try {
-      const response = await fetch(`http://localhost:3000/api/trips/${uniqueId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(tripData),
-      });
+    //TODO: see if we can get this using the server.js by making a POST request to the /api/trips endpoint
+    // This should then create a trip and add a trip summary to the meta.json file
+    const handleLocalSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      const uniqueId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9);
+      const updatedTrip = { ...trip, id: uniqueId };
+      const tripData = {
+        ...updatedTrip,
+        destination: capitalizeFirstLetter(updatedTrip.destination),
+        startDate: updatedTrip.startDate ? updatedTrip.startDate.toISOString() : null,
+        endDate: updatedTrip.endDate ? updatedTrip.endDate.toISOString() : null,
+        days: (updatedTrip.startDate && updatedTrip.endDate) ? createDays(updatedTrip.startDate, updatedTrip.endDate) : []
+      };
+      // Send the trip data to the server
+      try {
+        const response = await fetch(`http://localhost:3000/api/trips/${uniqueId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(tripData),
+        });
 
-      if (response.ok) {
-        navigate(`/trip/${uniqueId}`);
-        setTrip({ id: "", title: "", destination: "", startDate: null, endDate: null, accommodations: [], days: [] });
-      } else {
-        alert('Failed to create trip. Please try again');
+        if (response.ok) {
+          dialog.close("newtrip");
+          navigate(`/trip/${uniqueId}`);
+          setTrip({ id: "", title: "", destination: "", startDate: null, endDate: null, accommodations: [], days: [] });
+        } else {
+          alert('Failed to create trip. Please try again');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occured.');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('An error occured.');
-    }
-  };
+    };
 
     return (
       <Fieldset.Root size="lg" maxW="md" p="4">
