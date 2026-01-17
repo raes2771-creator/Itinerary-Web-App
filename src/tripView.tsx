@@ -109,7 +109,6 @@ export const dialog = createOverlay<DialogProps>((props): React.ReactNode => {
 });
 
 export default function TripView() {
-
   //Get the trip ID from the URL parameters
   const tripId = useParams().id;
 
@@ -123,6 +122,9 @@ export default function TripView() {
     days: [],
   });
   const [loading, setLoading] = useState(true);
+  const [isAccomDialogOpen, setIsAccomDialogOpen] = useState(false);
+  const [isDayDialogOpen, setIsDayDialogOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   // Fetch the trip data asynchronously from the Node server
   const loadTripData = async () => {
@@ -302,7 +304,7 @@ export default function TripView() {
       <ScrollArea.Root size="md">
         <ScrollArea.Viewport>
           <ScrollArea.Content py="4">
-            <HStack gap="4" >
+            <HStack gap="4">
               <For each={dayList}>
                 {(day) => {
                   const stayingAtItem = getStayingAtItem(day);
@@ -342,12 +344,10 @@ export default function TripView() {
                           ) : null}
                         </Box>
                         <Button variant="outline"
-                          onClick={() => dialog.open("day", {
-                            title: "Day " + day.dayNum,
-                            content: <DayView key={`day-${day.dayNum}`} thisTrip={trip} dayNum={day.dayNum} />,
-                            size: "full",
-                            placement: "center"
-                          })}>
+                          onClick={() => {
+                            setSelectedDay(day.dayNum);
+                            setIsDayDialogOpen(true);
+                          }}>
                           Go to day <LuArrowRight />
                         </Button>
                       </Card.Footer>
@@ -466,7 +466,7 @@ export default function TripView() {
           if (response.ok != true) {
             alert('Failed to add accommodation. Please try again');
           } else {
-            dialog.close("accom");
+            setIsAccomDialogOpen(false);
           }
         } catch (error) {
           console.error('Error:', error);
@@ -583,15 +583,46 @@ export default function TripView() {
                 <Button size="sm" colorPalette="blue"><LuPlus />Add Accommodation</Button>
               </Dialog.Trigger> */}
             <Button colorPalette="blue" size="md"
-              onClick={() => dialog.open("accom", {
-                title: "Add Accomodation",
-                content: <AccommodationForm />,
-                size: "lg",
-                placement: "center"
-              })}>
+              onClick={() => setIsAccomDialogOpen(true)}>
               <LuPlus />Add Accomodation Item
             </Button>
           </Box>
+
+          {/* Day View Dialog */}
+          <Dialog.Root open={isDayDialogOpen} onOpenChange={(details) => setIsDayDialogOpen(details.open)} size="cover">
+            <Portal>
+              <Dialog.Backdrop />
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Day {selectedDay}</Dialog.Title>
+                  <Dialog.CloseTrigger asChild>
+                    <CloseButton size="sm" />
+                  </Dialog.CloseTrigger>
+                </Dialog.Header>
+                <Dialog.Body p="1" spaceY="4">
+                  {selectedDay && trip && <DayView key={`day-${selectedDay}`} thisTrip={trip} dayNum={selectedDay} />}
+                </Dialog.Body>
+              </Dialog.Content>
+            </Portal>
+          </Dialog.Root>
+
+          {/* Accommodation Dialog */}
+          <Dialog.Root open={isAccomDialogOpen} onOpenChange={(details) => setIsAccomDialogOpen(details.open)} size="lg" placement="center">
+            <Portal>
+              <Dialog.Backdrop />
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Add Accommodation</Dialog.Title>
+                  <Dialog.CloseTrigger asChild>
+                    <CloseButton size="sm" />
+                  </Dialog.CloseTrigger>
+                </Dialog.Header>
+                <Dialog.Body p="1" spaceY="4">
+                  <AccommodationForm />
+                </Dialog.Body>
+              </Dialog.Content>
+            </Portal>
+          </Dialog.Root>
 
           {/* Color Mode Toggle */}
           <Box pos="absolute" top="4" right="4">
@@ -599,8 +630,6 @@ export default function TripView() {
               <ColorModeToggle />
             </ClientOnly>
           </Box>
-
-          <dialog.Viewport />
         </Box>
       ) : (
         emptyState
