@@ -1,7 +1,7 @@
 import { ColorModeToggle } from "./components/color-mode-toggle"
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Trip, Accommodation, AccommodationType, Day, ItineraryItem } from "./types";
+import { Trip, Accommodation, AccommodationType, Day, ItineraryItem, API_URL } from "./types";
 import 'react-datetime-picker/dist/DateTimePicker.css';
 import 'react-calendar/dist/Calendar.css';
 import 'react-clock/dist/Clock.css';
@@ -130,7 +130,7 @@ export default function TripView() {
   // Fetch the trip data asynchronously from the Node server
   const loadTripData = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/trips/${tripId}`);
+      const response = await fetch(`${API_URL}/api/trips/${tripId}`);
       const data = await response.json();
 
       // convert date strings -> Date objects
@@ -196,7 +196,7 @@ export default function TripView() {
     }
     setTrip(newTrip);
     try {
-      const response = await fetch(`http://localhost:3000/api/trips/${newTrip.id}`, {
+      const response = await fetch(`${API_URL}/api/trips/${newTrip.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -461,7 +461,7 @@ export default function TripView() {
           checkOutTime: null,
         });
         try {
-          const response = await fetch(`http://localhost:3000/api/trips/${newTrip.id}`, {
+          const response = await fetch(`${API_URL}/api/trips/${newTrip.id}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

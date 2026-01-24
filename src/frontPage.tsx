@@ -26,7 +26,7 @@ import {
 } from "@chakra-ui/react"
 import { LuArrowRight, LuTrash2, LuPlus, LuPencil } from "react-icons/lu" //currently unused, these are icons from a library
 import { ColorModeToggle } from "./components/color-mode-toggle"
-import { Trip, Day, TripSummary } from "./types"
+import { Trip, Day, TripSummary, API_URL } from "./types"
 import { useState, useEffect } from "react"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
@@ -75,7 +75,7 @@ export default function Page() {
   // Fetch the trip data asynchronously from the Node server
   const loadTripListData = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/trips/');
+      const response = await fetch(`${API_URL}/api/trips/`);
       const data = await response.json();
       if (Array.isArray(data)) {
         // Only update state if data has actually changed

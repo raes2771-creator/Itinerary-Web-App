@@ -20,7 +20,7 @@ import {
 } from "@chakra-ui/react"
 
 import { useState, useEffect, useCallback } from 'react'
-import { Trip, Day, ItineraryItem, ItineraryItemType, TodoItem } from "./types"
+import { Trip, Day, ItineraryItem, ItineraryItemType, TodoItem, API_URL } from "./types"
 import { LuPizza, LuMapPin, LuTrainFront, LuKey, LuBed, LuPlus, LuClock, LuX, LuPencil, LuCheck } from "react-icons/lu"
 import { getAccomColor, dialog, DialogProps } from "./tripView";
 import 'react-time-picker/dist/TimePicker.css';
@@ -83,7 +83,7 @@ const ItineraryItemForm = ({ trip, setTrip, dayNum }: { trip: Trip | null; setTr
       });
 
       try {
-        const response = await fetch(`http://localhost:3000/api/trips/${newTrip.id}`, {
+        const response = await fetch(`${API_URL}/api/trips/${newTrip.id}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -211,7 +211,7 @@ export default function DayView({ thisTrip, dayNum }: DayViewProps) {
 
         const newTrip = { ...trip, days: updatedDays };
 
-        const response = await fetch(`http://localhost:3000/api/trips/${newTrip.id}`, {
+        const response = await fetch(`${API_URL}/api/trips/${newTrip.id}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -262,7 +262,7 @@ export default function DayView({ thisTrip, dayNum }: DayViewProps) {
 
         const newTrip = { ...trip, days: updatedDays };
 
-        const response = await fetch(`http://localhost:3000/api/trips/${newTrip.id}`, {
+        const response = await fetch(`${API_URL}/api/trips/${newTrip.id}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
