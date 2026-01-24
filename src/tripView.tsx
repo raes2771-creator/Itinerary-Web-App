@@ -23,7 +23,8 @@ import {
   LuTrash2,
   LuPlus,
   LuClock,
-  LuBed
+  LuBed,
+  LuArrowLeft
 } from "react-icons/lu"
 import {
   Box,
@@ -304,7 +305,7 @@ export default function TripView() {
       <ScrollArea.Root size="md">
         <ScrollArea.Viewport>
           <ScrollArea.Content py="4">
-            <HStack gap="4">
+            <HStack gap="4" alignItems="start">
               <For each={dayList}>
                 {(day) => {
                   const stayingAtItem = getStayingAtItem(day);
@@ -317,19 +318,24 @@ export default function TripView() {
                           {getDayOfWeek(day.date)} - {day.date.getDate()}/{day.date.getMonth() + 1}/{day.date.getFullYear()}
                         </Card.Description>
                         <Box mt="4">
-                          <VStack align="start" gap="2" maxH="200px" overflowY="auto">
-                            {nonAccomItems.length > 0 ? (
-                              <For each={nonAccomItems.slice(0, 2)}>
+                          {nonAccomItems.length > 0 ? (
+                            <VStack align="start" gap="2" maxH="200px" overflowY="auto">
+                              <For each={nonAccomItems.slice(0, 3)}>
                                 {(item) => (
                                   <Box key={item.id} p="2" borderWidth="1px" borderRadius="md" w="100%">
-                                    <Text fontSize="xs">{item.time.slice(3)} - {item.activity}</Text>
+                                    <Text fontSize="xs">{item.time} - {item.activity}</Text>
                                   </Box>
                                 )}
                               </For>
-                            ) :
-                              <EmptyItineraryItem />
-                            }
-                          </VStack>
+                              {nonAccomItems.length > 3 ? (
+                                <Box key={nonAccomItems[3].id} p="2" w="100%">
+                                  <Text fontSize="xs">...</Text>
+                                </Box>
+                              ) : null}
+                            </VStack>
+                          ) : (
+                            <EmptyItineraryItem />
+                          )}
                         </Box>
                       </Card.Body>
                       <Card.Footer justifyContent="column">
@@ -563,7 +569,11 @@ export default function TripView() {
         </Box>
       ) : trip.id !== "" && trip.id === tripId ? (
         <Box textAlign="left" fontSize="xl" pt="2vh" margin="6">
-          <Heading size="4xl">{trip?.title} - Itinerary</Heading>
+          <Button size="xs" variant="ghost" color="fg.muted" pos="absolute" top="0" left="4"
+            onClick={() => navigate(`/`)}>
+            <LuArrowLeft /> Return to trip selection
+          </Button>
+          <Heading size="4xl" mb="2" mt="6">{trip?.title} - Itinerary</Heading>
           <Text mb="3" fontSize="md" color="fg.muted"> {/* Print the trip dates */}
             {trip?.destination} {trip?.startDate ? new Date(trip.startDate).toLocaleDateString() : 'N/A'} - {trip?.endDate ? new Date(trip.endDate).toLocaleDateString() : 'N/A'}
           </Text>
@@ -589,38 +599,42 @@ export default function TripView() {
           </Box>
 
           {/* Day View Dialog */}
-          <Dialog.Root open={isDayDialogOpen} onOpenChange={(details) => setIsDayDialogOpen(details.open)} size="cover">
-            <Portal>
+          <Portal>
+            <Dialog.Root open={isDayDialogOpen} onOpenChange={(details) => setIsDayDialogOpen(details.open)} size="cover">
               <Dialog.Backdrop />
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>Day {selectedDay}</Dialog.Title>
-                  <Dialog.CloseTrigger asChild>
-                    <CloseButton size="sm" />
-                  </Dialog.CloseTrigger>
-                </Dialog.Header>
-                <Dialog.Body p="1" spaceY="4">
-                  {selectedDay && trip && <DayView key={`day-${selectedDay}`} thisTrip={trip} dayNum={selectedDay} />}
-                </Dialog.Body>
-              </Dialog.Content>
-            </Portal>
-          </Dialog.Root>
+              <Dialog.Positioner>
+                <Dialog.Content>
+                  <Dialog.Header>
+                    <Dialog.Title>Day {selectedDay}</Dialog.Title>
+                    <Dialog.CloseTrigger asChild>
+                      <CloseButton size="sm" />
+                    </Dialog.CloseTrigger>
+                  </Dialog.Header>
+                  <Dialog.Body p="1" spaceY="4">
+                    {selectedDay && trip && <DayView key={`day-${selectedDay}`} thisTrip={trip} dayNum={selectedDay} />}
+                  </Dialog.Body>
+                </Dialog.Content>
+              </Dialog.Positioner>
+            </Dialog.Root>
+          </Portal>
 
           {/* Accommodation Dialog */}
           <Dialog.Root open={isAccomDialogOpen} onOpenChange={(details) => setIsAccomDialogOpen(details.open)} size="lg" placement="center">
             <Portal>
               <Dialog.Backdrop />
-              <Dialog.Content>
-                <Dialog.Header>
-                  <Dialog.Title>Add Accommodation</Dialog.Title>
-                  <Dialog.CloseTrigger asChild>
-                    <CloseButton size="sm" />
-                  </Dialog.CloseTrigger>
-                </Dialog.Header>
-                <Dialog.Body p="1" spaceY="4">
-                  <AccommodationForm />
-                </Dialog.Body>
-              </Dialog.Content>
+              <Dialog.Positioner>
+                <Dialog.Content>
+                  <Dialog.Header>
+                    <Dialog.Title>Add Accommodation</Dialog.Title>
+                    <Dialog.CloseTrigger asChild>
+                      <CloseButton size="sm" />
+                    </Dialog.CloseTrigger>
+                  </Dialog.Header>
+                  <Dialog.Body p="1" spaceY="4">
+                    <AccommodationForm />
+                  </Dialog.Body>
+                </Dialog.Content>
+              </Dialog.Positioner>
             </Portal>
           </Dialog.Root>
 

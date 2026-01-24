@@ -24,7 +24,7 @@ import {
   Spacer,
   Show
 } from "@chakra-ui/react"
-import { LuTicketsPlane, LuPlaneLanding, LuPlaneTakeoff, LuArrowRight, LuTrash2, LuPlus, LuPencil } from "react-icons/lu" //currently unused, these are icons from a library
+import { LuArrowRight, LuTrash2, LuPlus, LuPencil } from "react-icons/lu" //currently unused, these are icons from a library
 import { ColorModeToggle } from "./components/color-mode-toggle"
 import { Trip, Day, TripSummary } from "./types"
 import { useState, useEffect } from "react"

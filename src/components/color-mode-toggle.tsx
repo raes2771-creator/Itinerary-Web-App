@@ -8,8 +8,8 @@ export function ColorModeToggle() {
     setTheme(theme === "light" ? "dark" : "light")
   }
   return (
-    <IconButton aria-label="toggle color mode" onClick={toggleColorMode}>
-      {theme === "light" ? <LuMoon /> : <LuSun />}
+    <IconButton aria-label="toggle color mode" onClick={toggleColorMode} variant="ghost">
+      {theme === "dark" ? <LuMoon /> : <LuSun />}
     </IconButton>
   )
 }
