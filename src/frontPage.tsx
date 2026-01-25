@@ -173,7 +173,7 @@ export default function Page() {
       };
       // Send the trip data to the server
       try {
-        const response = await fetch(`http://localhost:3000/api/trips/${uniqueId}`, {
+        const response = await fetch(`${API_URL}/api/trips/${uniqueId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
