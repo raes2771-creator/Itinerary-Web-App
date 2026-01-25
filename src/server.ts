@@ -8,9 +8,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 const DATA_DIR = path.join(process.cwd(), 'data');
 const TRIPS_DIR = path.join(DATA_DIR, 'trips');
 const META_FILE = path.join(DATA_DIR, 'meta.json');
+
+// SERVE THE STATIC REACT APP FILES
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // GET ALL TRIPS
 app.get('/api/trips', async (req: Request, res: Response) => {
@@ -66,4 +70,10 @@ app.post('/api/trips/:id', async (req: Request<{ id: string }, any, Trip>, res: 
   }
 });
 
-app.listen(3000, () => console.log('Server running on http://localhost:3000'));
+// RETURN index.html for any unknown routes:
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(3000, () => console.log(`Server running on port ${PORT}`));

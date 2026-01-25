@@ -11,3 +11,21 @@ export default defineConfig({
   //   },
   // },
 })
+
+export default defineConfig({
+ base: "/",
+ plugins: [react(),tsconfigPaths()],
+ resolve: {
+   alias: {
+     "@chakra-ui/react": resolve("..", "..", "packages/react/src"),
+ preview: {
+  port: 3333,
+  strictPort: true,
+ },
+ server: {
+  port: 3333,
+  strictPort: true,
+  host: true,
+  origin: "http://0.0.0.0:3333",
+ },
+});

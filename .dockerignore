@@ -1,0 +1,6 @@
+node_modules
+dist-server
+dist
+.git
+.env
+# data/  <-- Make sure this is NOT here or is commented out
