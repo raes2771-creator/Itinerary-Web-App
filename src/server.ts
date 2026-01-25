@@ -13,8 +13,27 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 const TRIPS_DIR = path.join(DATA_DIR, 'trips');
 const META_FILE = path.join(DATA_DIR, 'meta.json');
 
+//ensure directories and files exist at startup:
+async function initialiseData() {
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+
+    await fs.mkdir(TRIPS_DIR, { recursive: true });
+
+    try {
+      await fs.access(META_FILE);
+    } catch {
+      // Access throws an error if the file doesn't exist
+      await fs.writeFile(META_FILE, JSON.stringify([], null, 2));
+      console.log('Created missing meta.json');
+    }
+  } catch (err) {
+    console.error('Error initializing data directory:', err);
+  }
+}
+
 // SERVE THE STATIC REACT APP FILES
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(process.cwd(), 'dist')));
 
 // GET ALL TRIPS
 app.get('/api/trips', async (req: Request, res: Response) => {
@@ -29,8 +48,14 @@ app.get('/api/trips', async (req: Request, res: Response) => {
 
 // GET SPECIFIC TRIP
 app.get('/api/trips/:id', async (req: Request<{ id: string }>, res: Response) => {
+  const id: string = req.params.id;
+
+  if (id.includes('..')) {
+    return res.status(400).send("Invalid filename");
+  }
+
   try {
-    const filePath: string = path.join(TRIPS_DIR, `${req.params.id}.json`);
+    const filePath: string = path.join(TRIPS_DIR, `${id}.json`);
     const data: string = await fs.readFile(filePath, 'utf-8');
     const trip: Trip = JSON.parse(data);
     res.json(trip);
@@ -71,9 +96,13 @@ app.post('/api/trips/:id', async (req: Request<{ id: string }, any, Trip>, res: 
 });
 
 // RETURN index.html for any unknown routes:
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+app.get('*path', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
 });
+
+initialiseData();
 
 const PORT = process.env.PORT || 3000;
 app.listen(3000, () => console.log(`Server running on port ${PORT}`));
+
+

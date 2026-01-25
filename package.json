@@ -1,6 +1,7 @@
 {
   "name": "vite-ts",
   "private": true,
+  "type": "module",
   "version": "1.0.2",
   "scripts": {
     "dev:frontend": "vite",

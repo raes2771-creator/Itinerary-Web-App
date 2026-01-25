@@ -16,7 +16,7 @@ RUN npm run build
 # 2. Compile the Backend (server.ts -> server.js)
 # We use npx tsc to compile the single file. 
 # --esModuleInterop and --skipLibCheck help avoid common TS-Node compatibility grumbles.
-RUN npx tsc server.ts --outDir dist-server --esModuleInterop --skipLibCheck --target esnext --moduleResolution node
+RUN npx tsc src/server.ts --outDir dist-server --esModuleInterop --skipLibCheck --target esnext --moduleResolution node
 
 # --- Stage 2: Runtime Stage ---
 FROM node:20-alpine
